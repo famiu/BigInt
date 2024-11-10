@@ -1,0 +1,81 @@
+---
+BasedOnStyle: Google
+Language: Cpp
+
+SortIncludes: true
+
+# 120 column limit, 4 space indenting.
+ColumnLimit: 120
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+PPIndentWidth: 3
+AlignConsecutiveMacros: AcrossEmptyLines
+IndentPPDirectives: AfterHash
+
+# No indenting for access modifiers or case labels.
+AccessModifierOffset: -4
+IndentAccessModifiers: false
+IndentCaseLabels: false
+
+# Wrap braces after class, enum, function, struct and union.
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterCaseLabel:        false
+    AfterClass:            true
+    AfterControlStatement: Never
+    AfterEnum:             true
+    AfterFunction:         true
+    AfterNamespace:        true
+    AfterObjCDeclaration:  true
+    AfterStruct:           true
+    AfterUnion:            true
+    AfterExternBlock:      true
+    BeforeCatch:           false
+    BeforeElse:            false
+    BeforeLambdaBody:      false
+    BeforeWhile:           false
+    IndentBraces:          false
+    SplitEmptyFunction:    true
+    SplitEmptyRecord:      true
+    SplitEmptyNamespace:   true
+
+AlignAfterOpenBracket: BlockIndent
+AlignEscapedNewlines: Right
+AlignTrailingComments: true
+
+SpaceBeforeParens: ControlStatements
+SpaceBeforeCaseColon: false
+SpaceAfterTemplateKeyword: false
+SpacesBeforeTrailingComments: 2
+
+# Avoid breaking after return type
+PenaltyReturnTypeOnItsOwnLine: 50
+BreakAfterReturnType: Automatic
+
+BreakTemplateDeclarations: Yes
+AlwaysBreakBeforeMultilineStrings: No
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortCompoundRequirementOnASingleLine: true
+
+BinPackParameters: false
+BinPackArguments: false
+
+# Align pointers and references to the right
+PointerAlignment: Right
+
+# Use east-const style.
+QualifierAlignment: Right
+
+Cpp11BracedListStyle: true
+...
