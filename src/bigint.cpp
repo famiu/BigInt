@@ -16,14 +16,6 @@ using DataType = std::vector<ChunkType>;
 constexpr auto chunk_size = sizeof(ChunkType);
 constexpr ChunkType chunk_max = std::numeric_limits<ChunkType>::max();
 
-enum class Base : std::uint_fast8_t
-{
-    Binary = 2,
-    Octal = 8,
-    Decimal = 10,
-    Hexadecimal = 16
-};
-
 template<typename T>
 static constexpr auto to_signed(T const &num) -> std::make_signed_t<T>
 {
@@ -59,7 +51,132 @@ constexpr BigInt::BigInt(std::integral auto const &num)
     }
 }
 
-BigInt::BigInt(std::string const &num)
+auto BigInt::is_valid_digit(Base base, char c) -> bool {
+    switch (base) {
+    case Base::Binary:
+        return c == '0' || c == '1';
+    case Base::Octal:
+        return c >= '0' && c <= '7';
+    case Base::Decimal:
+        return std::isdigit(c) == 0;
+    case Base::Hexadecimal:
+        return std::isxdigit(c) == 0;
+    }
+}
+
+auto BigInt::char_to_digit(Base base, char c) -> ChunkType {
+    switch (base) {
+    case Base::Binary:
+    case Base::Octal:
+    case Base::Decimal:
+        return c - '0';
+    case Base::Hexadecimal:
+        if (std::isdigit(c) == 0) {
+            return c - '0';
+        } else {
+            return std::tolower(c) - 'a' + 10;
+        }
+    }
+}
+
+/// Convert a base to binary.
+void BigInt::base_to_binary(Base base, std::string_view num)
+{
+    // Numeric value of base. Used for base conversion.
+    auto const base_num = std::to_underlying(base);
+
+    // Approximate the number of chunks needed to store the number and reserve the space
+    size_t const chunk_count =
+        std::ceil(static_cast<long double>(num.size()) * std::log2(base_num) / (chunk_size * 8));
+    chunks.reserve(chunk_count);
+
+    // Maximum number that can fit in a half-sized chunk
+    static auto const half_chunk_bits = chunk_size * 4;
+    static auto const half_chunk_max = (2 << half_chunk_bits);
+
+    // The process:
+    // 1. Long divide the number by 2 ^ ((chunk_size / 2) * 8) and store the remainder in the chunk twice to fill a
+    // full
+    //    chunk.
+    // 2. Repeat until the number is 0.
+    while (!num.empty()) {
+        std::string new_num;
+        ChunkType chunk{0};
+
+        for (int i = 0; i < 2; ++i) {
+            ChunkType dividend{0};
+
+            // Long divide num by half_chunk_max.
+            // 1. Iterate through the num string, converting the digits to numbers and adding them to dividend.
+            // 2. Once dividend is greater than or equal to half_chunk_max, divide it by half_chunk_max and add the
+            //    quotient to the new num, and set dividend to the remainder and repeat the process.
+            // 3. If dividend is less than half_chunk_max and there are digits in the new num, add a 0 to the new num.
+            for (char digit : num) {
+                if (!is_valid_digit(base, digit)) {
+                    throw std::invalid_argument(std::format("Invalid digit: {}", digit));
+                }
+
+                // Add the digit to the dividend
+                dividend = dividend * base_num + char_to_digit(base, digit);
+
+                // Dividend is greater than or equal to half_chunk_max, divide it by half_chunk_max and add the quotient
+                // to the new num, and set dividend to the remainder.
+                if (dividend >= half_chunk_max) {
+                    ChunkType quot = dividend / half_chunk_max;
+                    ChunkType rem = dividend % half_chunk_max;
+
+                    assert(quot < base_num);
+                    // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
+                    new_num += '0' + static_cast<char>(quot);
+                    dividend = rem;
+                } else if (!new_num.empty()) {
+                    // Add 0 to num if there are digits before the current one.
+                    new_num += '0';
+                }
+            }
+
+            // Append dividend to the chunk. Each iteration of i will fill half of the chunk.
+            chunk = chunk << (i * half_chunk_bits) | dividend;
+        }
+
+        // Add the chunk to the chunks vector and reset it.
+        chunks.push_back(chunk);
+        num = new_num;
+    }
+}
+
+auto BigInt::to_base(Base base) const -> std::string
+{
+    // Not implemented
+    throw std::runtime_error("Not implemented");
+}
+
+/// Set chunks to its two's complement.
+void BigInt::to_twos_complement()
+{
+    // 1. Invert all the bits.
+    // 2. Add 1.
+    for (auto &c : chunks) {
+        c = ~c;
+    }
+
+    ChunkType carry{1};
+
+    for (auto &c : chunks) {
+        if (c == chunk_max && carry != 0) {
+            c = 0;
+        } else {
+            c += carry;
+            carry = 0;
+        }
+    }
+
+    if (carry != 0) {
+        chunks.push_back(carry);
+    }
+}
+
+BigInt::BigInt(std::string_view num)
 {
     /// Prefix character after 0 that indicates the base of the number.
     static constexpr auto base_prefixes = {
@@ -93,122 +210,17 @@ BigInt::BigInt(std::string const &num)
         throw_invalid_number();
     }
 
-    /// Check if the character is a valid digit for the base.
-    auto is_valid_digit = [base](char const &c) -> bool {
-        switch (base) {
-        case Base::Binary:
-            return c == '0' || c == '1';
-        case Base::Octal:
-            return c >= '0' && c <= '7';
-        case Base::Decimal:
-            return std::isdigit(c);
-        case Base::Hexadecimal:
-            return std::isxdigit(c);
-        }
-    };
-
-    /// Convert a character to a digit for the base.
-    auto char_to_digit = [base](char const &c) -> ChunkType {
-        switch (base) {
-        case Base::Binary:
-        case Base::Octal:
-        case Base::Decimal:
-            return c - '0';
-        case Base::Hexadecimal:
-            if (std::isdigit(c)) {
-                return c - '0';
-            } else {
-                return std::tolower(c) - 'a' + 10;
-            }
-        }
-    };
-
     // Character representation of all digits
     static auto const digits = "0123456789abcdef"s;
 
     /// Numeric representation of the base. Used for base conversion.
     auto const base_num = std::to_underlying(base);
 
-    // Approximate the number of chunks needed to store the number and reserve the space
-    size_t const chunk_count =
-        std::ceil(static_cast<long double>(num.size()) * std::log2(base_num) / (chunk_size * 8));
-    chunks.reserve(chunk_count);
-
-    // The process:
-    // 1. Long divide the number by 2 ^ ((chunk_size / 2) * 8) and store the remainder in the chunk twice to fill a
-    // full
-    //    chunk.
-    // 2. Repeat until the number is 0
-    // 3. If the number is negative, take the two's complement by inverting the bits and adding 1
-    ChunkType chunk{0};
-    std::string result = num.substr(index);
-
-    // Maximum number that can fit in a half-sized chunk
-    static auto const half_chunk_bits = chunk_size * 4;
-    static auto const half_chunk_max = (2 << half_chunk_bits);
-
-    while (result != "") {
-        std::string new_result;
-        ChunkType carry{0};
-
-        for (int i = 0; i < 2; ++i) {
-            ChunkType dividend{0};
-
-            // Long divide result by half_chunk_max.
-            // 1. Iterate through the result string, converting the digits to numbers and adding them to dividend.
-            // 2. Once dividend is greater than or equal to half_chunk_max, divide it by half_chunk_max and add the
-            //    quotient to the new result, and set dividend to the remainder and repeat the process.
-            // 3. If dividend is less than half_chunk_max and there are digits in the new result, add a 0 to the new
-            //    result.
-            for (char digit : result) {
-                if (!is_valid_digit(digit)) {
-                    throw_invalid_number();
-                }
-
-                // Add the digit to the dividend
-                dividend = dividend * base_num + char_to_digit(digit);
-
-                // Dividend is greater than or equal to half_chunk_max, divide it by half_chunk_max and add the quotient
-                // to the new result, and set dividend to the remainder.
-                if (dividend >= half_chunk_max) {
-                    ChunkType quot = dividend / half_chunk_max;
-                    ChunkType rem = dividend % half_chunk_max;
-
-                    assert(quot < base_num);
-                    new_result += digits[quot];
-                    dividend = rem;
-                } else if (!new_result.empty()) {
-                    // Add 0 to result if there are digits before the current one.
-                    new_result += '0';
-                }
-            }
-
-            // Append dividend to the chunk. Each iteration of i will fill half of the chunk.
-            chunk = chunk << (i * half_chunk_bits) | dividend;
-        }
-
-        // Add the chunk to the chunks vector and reset it.
-        chunks.push_back(chunk);
-        chunk = 0;
-        result = new_result;
-    }
+    // Convert the number to binary and store it in chunks.
+    base_to_binary(base, num.substr(index));
 
     // Use two's complement if the number is negative.
-    // 1. Invert all the bits.
-    // 2. Add 1.
     if (negative) {
-        for (auto &c : chunks) {
-            c = ~c;
-        }
-
-        ChunkType carry{1};
-        for (auto &c : chunks) {
-            if (c == chunk_max && carry != 0) {
-                c = 0;
-            } else {
-                c += carry;
-                carry = 0;
-            }
-        }
+        base_to_binary(base, num.substr(1));
     }
 }

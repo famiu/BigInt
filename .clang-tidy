@@ -10,6 +10,7 @@ Checks: >
     readability-*,
     clang-analyzer-*
     misc-non-private-member-variables-in-classes,
+    -readability-function-cognitive-complexity,
     -readability-identifier-length,
     -readability-magic-numbers,
     -cppcoreguidelines-avoid-magic-numbers,

@@ -13,25 +13,25 @@ public:
     constexpr BigInt(BigInt const &rhs) = default;
     constexpr BigInt(BigInt &&rhs) = default;
     constexpr explicit BigInt(std::integral auto const &num);
-    explicit BigInt(std::string const &num);
+    explicit BigInt(std::string_view num);
     constexpr auto operator=(BigInt const &rhs) noexcept -> BigInt & = default;
     constexpr auto operator=(BigInt &&rhs) noexcept -> BigInt & = default;
     ~BigInt() = default;
 
-    constexpr auto operator+(BigInt const &rhs) const noexcept;
-    constexpr auto operator-(BigInt const &rhs) const noexcept;
-    constexpr auto operator*(BigInt const &rhs) const noexcept;
-    constexpr auto operator/(BigInt const &rhs) const noexcept;
-    constexpr auto operator%(BigInt const &rhs) const noexcept;
+    constexpr auto operator+(BigInt const &rhs) const noexcept -> BigInt;
+    constexpr auto operator-(BigInt const &rhs) const noexcept -> BigInt;
+    constexpr auto operator*(BigInt const &rhs) const noexcept -> BigInt;
+    constexpr auto operator/(BigInt const &rhs) const noexcept -> BigInt;
+    constexpr auto operator%(BigInt const &rhs) const noexcept -> BigInt;
     constexpr auto operator-() const noexcept;
 
-    constexpr auto operator&(BigInt const &rhs) const noexcept;
-    constexpr auto operator|(BigInt const &rhs) const noexcept;
-    constexpr auto operator^(BigInt const &rhs) const noexcept;
+    constexpr auto operator&(BigInt const &rhs) const noexcept -> BigInt;
+    constexpr auto operator|(BigInt const &rhs) const noexcept -> BigInt;
+    constexpr auto operator^(BigInt const &rhs) const noexcept -> BigInt;
     constexpr auto operator~() const noexcept;
 
-    constexpr auto operator<<(BigInt const &rhs) const noexcept;
-    constexpr auto operator>>(BigInt const &rhs) const noexcept;
+    constexpr auto operator<<(BigInt const &rhs) const noexcept -> BigInt;
+    constexpr auto operator>>(BigInt const &rhs) const noexcept -> BigInt;
 
     constexpr auto operator+=(BigInt const &rhs) noexcept -> BigInt &;
     constexpr auto operator-=(BigInt const &rhs) noexcept -> BigInt &;
@@ -59,6 +59,20 @@ public:
 private:
     /// @brief Chunks of the number. Stored in little endian.
     DataType chunks;
+
+    enum class Base : std::uint_fast8_t
+    {
+        Binary = 2,
+        Octal = 8,
+        Decimal = 10,
+        Hexadecimal = 16
+    };
+
+    static auto is_valid_digit(Base base, char c) -> bool;
+    static auto char_to_digit(Base base, char c) -> ChunkType;
+    void base_to_binary(Base base, std::string_view num);
+    void to_twos_complement();
+    [[nodiscard]] auto to_base(Base base) const -> std::string;
 };
 
 auto operator""_bi(char const *) -> BigInt;
