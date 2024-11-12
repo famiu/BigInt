@@ -1,4 +1,4 @@
-add_library(bigint SHARED "../include/bigint.hpp" "bigint.cpp" "string_parser.cpp")
+add_library(bigint SHARED "../include/bigint.hpp" "utils.hpp" "bigint.cpp" "string_parser.cpp")
 target_include_directories(bigint PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 # Add some useful warnings

@@ -1,11 +1,11 @@
+#include "bigint.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <format>
 #include <stdexcept>
 #include <utility>
-
-#include "bigint.hpp"
 
 using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
@@ -109,13 +109,13 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
     ChunkType current_chunk{};
     size_t current_chunk_bits = 0;
 
-    for (size_t i = num.size(); i > 0; i -= bits_per_digit) {
+    for (size_t i = num.size(); i-- > 0;) {
         // Bits that will fit in the current chunk.
         size_t const added_bits = std::min(bits_per_digit, chunk_bits - current_chunk_bits);
         // Bits that won't fit in the current chunk.
         size_t const remaining_bits = bits_per_digit - added_bits;
         // Digit corresponding to the current character.
-        ChunkType const digit = char_to_digit(base, num[i - 1]);
+        ChunkType const digit = char_to_digit(base, num[i]);
 
         // Digit without the bits that won't fit in the current chunk.
         ChunkType const digit_masked = digit & ((1 << added_bits) - 1);
@@ -239,7 +239,7 @@ auto BigInt::to_decimal() const -> std::string
     // Keep dividing modulo 10 and store the remainder in a string.
     BigInt quotient{*this};
     BigInt remainder;
-    static const auto ten = 10_bi;
+    static auto const ten = 10_bi;
     std::string result;
 
     while (!quotient.is_zero()) {
