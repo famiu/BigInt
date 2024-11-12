@@ -60,6 +60,7 @@ AlwaysBreakBeforeMultilineStrings: No
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: true
 
+AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
