@@ -60,11 +60,6 @@ BigInt::BigInt(std::integral auto const &num)
 
 BigInt::BigInt(std::string_view num)
 {
-    /// Prefix character after 0 that indicates the base of the number.
-    static constexpr auto base_prefixes = {
-      std::pair{'b', Base::Binary}, std::pair{'o', Base::Octal}, std::pair{'x', Base::Hexadecimal}
-    };
-
     auto throw_invalid_number = [&num]() {
         throw std::invalid_argument(std::format("Invalid number: \"{}\"", num));
     };
@@ -78,12 +73,15 @@ BigInt::BigInt(std::string_view num)
     Base base{Base::Decimal};
 
     if (num.size() > index + 1 && num[index] == '0') {
-        for (auto const &[prefix, prefix_base] : base_prefixes) {
-            if (num[index + 1] == prefix) {
-                base = prefix_base;
-                index += 2;
-                break;
-            }
+        if (std::tolower(num[index + 1]) == 'x') {
+            base = Base::Hexadecimal;
+            index += 2;
+        } else if (std::tolower(num[index + 1]) == 'b') {
+            base = Base::Binary;
+            index += 2;
+        } else {
+            base = Base::Octal;
+            index += 1;
         }
     }
 
