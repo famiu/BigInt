@@ -2,10 +2,8 @@
 
 #include <cassert>
 #include <cmath>
-#include <iostream>
+#include <format>
 #include <utility>
-
-#include "utils.hpp"
 
 using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
@@ -13,24 +11,6 @@ using DataType = BigInt::DataType;
 BigInt::BigInt()
 {
     chunks.push_back(0);
-}
-
-BigInt::BigInt(std::integral auto const &num)
-{
-    auto const num_unsigned = to_unsigned(num);
-    auto const num_size = sizeof(num_unsigned) * 8;
-
-    for (auto i = 0; i < num_size; i += chunk_bits) {
-        chunks.push_back(static_cast<ChunkType>((num_unsigned >> i) & chunk_max));
-    }
-
-    // Remove leading zeroes.
-    remove_leading_zeroes();
-
-    // Use two's complement if the number is negative.
-    if (num < 0) {
-        negative = true;
-    }
 }
 
 BigInt::BigInt(std::string_view num)
@@ -406,26 +386,6 @@ auto BigInt::abs() const noexcept -> BigInt
     BigInt result{*this};
     result.negative = false;
     return result;
-}
-
-auto BigInt::convert(std::string const &output) noexcept -> bool
-{
-    try {
-        *this = BigInt{output};
-        return true;
-    } catch (std::invalid_argument const &) {
-        return false;
-    }
-}
-
-auto BigInt::convert(std::integral auto const &output) noexcept -> bool
-{
-    try {
-        *this = BigInt{output};
-        return true;
-    } catch (std::overflow_error const &) {
-        return false;
-    }
 }
 
 auto operator""_bi(char const *num) -> BigInt

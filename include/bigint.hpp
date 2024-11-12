@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "utils.hpp"
+
 class BigInt
 {
 public:
@@ -17,11 +19,25 @@ public:
     BigInt();
     BigInt(BigInt const &rhs) = default;
     BigInt(BigInt &&rhs) noexcept = default;
-    explicit BigInt(std::integral auto const &num);
+
+    explicit BigInt(std::integral auto const &num) : negative{num < 0}
+    {
+        auto const num_unsigned = to_unsigned(negative ? -num : num);
+        auto const num_size = sizeof(num_unsigned) * 8;
+
+        for (auto i = 0; i < num_size; i += chunk_bits) {
+            chunks.push_back(static_cast<ChunkType>((num_unsigned >> i) & chunk_max));
+        }
+
+        // Remove leading zeroes.
+        remove_leading_zeroes();
+    }
+
     explicit BigInt(std::string_view num);
+    ~BigInt() = default;
+
     auto operator=(BigInt const &rhs) noexcept -> BigInt & = default;
     auto operator=(BigInt &&rhs) noexcept -> BigInt & = default;
-    ~BigInt() = default;
 
     auto operator+() const noexcept -> BigInt;
     auto operator-() const noexcept -> BigInt;
@@ -61,18 +77,16 @@ public:
     auto operator<=>(BigInt const &rhs) const noexcept -> std::strong_ordering;
     auto operator==(BigInt const &rhs) const noexcept -> bool;
 
-    template<std::integral T>
-    auto operator<=>(T const &rhs) const noexcept -> std::strong_ordering
+    auto operator<=>(std::integral auto const &rhs) const noexcept -> std::strong_ordering
     {
         try {
-            return static_cast<T>(*this) <=> rhs;
+            return static_cast<decltype(rhs)>(*this) <=> rhs;
         } catch (std::overflow_error const &) {
             return negative ? std::strong_ordering::less : std::strong_ordering::greater;
         }
     }
 
-    template<std::integral T>
-    auto operator==(T const &rhs) const noexcept -> bool
+    auto operator==(std::integral auto const &rhs) const noexcept -> bool
     {
         return (*this <=> rhs) == std::strong_ordering::equal;
     }
@@ -109,8 +123,25 @@ public:
 
     [[nodiscard]] auto abs() const noexcept -> BigInt;
 
-    auto convert(std::string const &output) noexcept -> bool;
-    auto convert(std::integral auto const &output) noexcept -> bool;
+    auto convert(std::string const &output) noexcept -> bool
+    {
+        try {
+            *this = BigInt{output};
+            return true;
+        } catch (std::invalid_argument const &) {
+            return false;
+        }
+    }
+
+    auto convert(std::integral auto const &output) noexcept -> bool
+    {
+        try {
+            *this = BigInt{output};
+            return true;
+        } catch (std::overflow_error const &) {
+            return false;
+        }
+    }
 
     static auto div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>;
     friend auto operator""_bi(char const *) -> BigInt;
@@ -141,8 +172,8 @@ private:
 
     [[nodiscard]] auto compare_magnitude(BigInt const &rhs) const noexcept -> std::strong_ordering;
 
-    [[nodiscard]] BigInt add_magnitude(BigInt const &rhs) const noexcept;
-    [[nodiscard]] BigInt subtract_magnitude(BigInt const &rhs) const noexcept;
+    [[nodiscard]] auto add_magnitude(BigInt const &rhs) const noexcept -> BigInt;
+    [[nodiscard]] auto subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt;
 
     static auto is_valid_digit(Base base, char c) -> bool;
     static auto char_to_digit(Base base, char c) -> ChunkType;

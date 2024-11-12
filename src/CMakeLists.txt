@@ -1,5 +1,5 @@
 add_library(bigint SHARED "../include/bigint.hpp" "utils.hpp" "bigint.cpp" "string_parser.cpp")
-target_include_directories(bigint PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(bigint PUBLIC "${PROJECT_SOURCE_DIR}/include" PUBLIC "${PROJECT_SOURCE_DIR}/src")
 
 # Add some useful warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

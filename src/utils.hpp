@@ -9,6 +9,9 @@ static constexpr auto to_unsigned(T const &num) -> std::make_unsigned_t<T>
     if constexpr (std::is_unsigned_v<T>) {
         return num;
     } else {
+        if (num < 0) {
+            throw std::overflow_error("Number is negative and cannot be converted to an unsigned type");
+        }
         return static_cast<std::make_unsigned_t<T>>(num);
     }
 }
