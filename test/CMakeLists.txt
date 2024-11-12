@@ -8,7 +8,12 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
+
 add_executable(tests test.cpp)
+# Disable -Werror for tests
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(tests PRIVATE -Wno-error)
+endif()
 target_include_directories(tests PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(tests PRIVATE bigint)

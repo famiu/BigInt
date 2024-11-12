@@ -7,7 +7,7 @@ SortIncludes: true
 # 120 column limit, 4 space indenting.
 ColumnLimit: 120
 IndentWidth: 4
-ContinuationIndentWidth: 4
+ContinuationIndentWidth: 2
 TabWidth: 4
 UseTab: Never
 

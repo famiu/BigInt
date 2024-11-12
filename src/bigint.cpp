@@ -4,27 +4,13 @@
 #include <cmath>
 #include <format>
 #include <limits>
-#include <stdexcept>
-#include <type_traits>
 #include <utility>
 
-using namespace std::string_literals;
-
 using ChunkType = BigInt::ChunkType;
-using DataType = std::vector<ChunkType>;
+using DataType = BigInt::DataType;
 
-constexpr auto chunk_size = sizeof(ChunkType);
+constexpr auto chunk_bits = sizeof(ChunkType) * 8;
 constexpr ChunkType chunk_max = std::numeric_limits<ChunkType>::max();
-
-template<typename T>
-static constexpr auto to_signed(T const &num) -> std::make_signed_t<T>
-{
-    if constexpr (std::is_signed_v<T>) {
-        return num;
-    } else {
-        return static_cast<std::make_signed_t<T>>(num);
-    }
-}
 
 template<typename T>
 static constexpr auto to_unsigned(T const &num) -> std::make_unsigned_t<T>
@@ -36,143 +22,39 @@ static constexpr auto to_unsigned(T const &num) -> std::make_unsigned_t<T>
     }
 }
 
-constexpr BigInt::BigInt()
+template<typename T>
+static constexpr auto to_signed(T const &num) -> std::make_signed_t<T>
+{
+    if constexpr (std::is_signed_v<T>) {
+        return num;
+    } else {
+        if (num > std::numeric_limits<std::make_signed_t<T>>::max()) {
+            throw std::overflow_error("Number is too large to be converted to a signed type");
+        }
+        return static_cast<std::make_signed_t<T>>(num);
+    }
+}
+
+BigInt::BigInt()
 {
     chunks.push_back(0);
 }
 
-constexpr BigInt::BigInt(std::integral auto const &num)
+BigInt::BigInt(std::integral auto const &num)
 {
-    constexpr auto num_unsigned = to_unsigned(num);
-    constexpr auto num_size = sizeof(num_unsigned) * 8;
+    auto const num_unsigned = to_unsigned(num);
+    auto const num_size = sizeof(num_unsigned) * 8;
 
-    for (auto i = 0; i < num_size; i += chunk_size * 8) {
+    for (auto i = 0; i < num_size; i += chunk_bits) {
         chunks.push_back(static_cast<ChunkType>((num_unsigned >> i) & chunk_max));
     }
-}
 
-auto BigInt::is_valid_digit(Base base, char c) -> bool {
-    switch (base) {
-    case Base::Binary:
-        return c == '0' || c == '1';
-    case Base::Octal:
-        return c >= '0' && c <= '7';
-    case Base::Decimal:
-        return std::isdigit(c) == 0;
-    case Base::Hexadecimal:
-        return std::isxdigit(c) == 0;
-    }
-}
+    // Remove leading zeroes.
+    remove_leading_zeroes();
 
-auto BigInt::char_to_digit(Base base, char c) -> ChunkType {
-    switch (base) {
-    case Base::Binary:
-    case Base::Octal:
-    case Base::Decimal:
-        return c - '0';
-    case Base::Hexadecimal:
-        if (std::isdigit(c) == 0) {
-            return c - '0';
-        } else {
-            return std::tolower(c) - 'a' + 10;
-        }
-    }
-}
-
-/// Convert a base to binary.
-void BigInt::base_to_binary(Base base, std::string_view num)
-{
-    // Numeric value of base. Used for base conversion.
-    auto const base_num = std::to_underlying(base);
-
-    // Approximate the number of chunks needed to store the number and reserve the space
-    size_t const chunk_count =
-        std::ceil(static_cast<long double>(num.size()) * std::log2(base_num) / (chunk_size * 8));
-    chunks.reserve(chunk_count);
-
-    // Maximum number that can fit in a half-sized chunk
-    static auto const half_chunk_bits = chunk_size * 4;
-    static auto const half_chunk_max = (2 << half_chunk_bits);
-
-    // The process:
-    // 1. Long divide the number by 2 ^ ((chunk_size / 2) * 8) and store the remainder in the chunk twice to fill a
-    // full
-    //    chunk.
-    // 2. Repeat until the number is 0.
-    while (!num.empty()) {
-        std::string new_num;
-        ChunkType chunk{0};
-
-        for (int i = 0; i < 2; ++i) {
-            ChunkType dividend{0};
-
-            // Long divide num by half_chunk_max.
-            // 1. Iterate through the num string, converting the digits to numbers and adding them to dividend.
-            // 2. Once dividend is greater than or equal to half_chunk_max, divide it by half_chunk_max and add the
-            //    quotient to the new num, and set dividend to the remainder and repeat the process.
-            // 3. If dividend is less than half_chunk_max and there are digits in the new num, add a 0 to the new num.
-            for (char digit : num) {
-                if (!is_valid_digit(base, digit)) {
-                    throw std::invalid_argument(std::format("Invalid digit: {}", digit));
-                }
-
-                // Add the digit to the dividend
-                dividend = dividend * base_num + char_to_digit(base, digit);
-
-                // Dividend is greater than or equal to half_chunk_max, divide it by half_chunk_max and add the quotient
-                // to the new num, and set dividend to the remainder.
-                if (dividend >= half_chunk_max) {
-                    ChunkType quot = dividend / half_chunk_max;
-                    ChunkType rem = dividend % half_chunk_max;
-
-                    assert(quot < base_num);
-                    // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-                    new_num += '0' + static_cast<char>(quot);
-                    dividend = rem;
-                } else if (!new_num.empty()) {
-                    // Add 0 to num if there are digits before the current one.
-                    new_num += '0';
-                }
-            }
-
-            // Append dividend to the chunk. Each iteration of i will fill half of the chunk.
-            chunk = chunk << (i * half_chunk_bits) | dividend;
-        }
-
-        // Add the chunk to the chunks vector and reset it.
-        chunks.push_back(chunk);
-        num = new_num;
-    }
-}
-
-auto BigInt::to_base(Base base) const -> std::string
-{
-    // Not implemented
-    throw std::runtime_error("Not implemented");
-}
-
-/// Set chunks to its two's complement.
-void BigInt::to_twos_complement()
-{
-    // 1. Invert all the bits.
-    // 2. Add 1.
-    for (auto &c : chunks) {
-        c = ~c;
-    }
-
-    ChunkType carry{1};
-
-    for (auto &c : chunks) {
-        if (c == chunk_max && carry != 0) {
-            c = 0;
-        } else {
-            c += carry;
-            carry = 0;
-        }
-    }
-
-    if (carry != 0) {
-        chunks.push_back(carry);
+    // Use two's complement if the number is negative.
+    if (num < 0) {
+        negative = true;
     }
 }
 
@@ -180,7 +62,7 @@ BigInt::BigInt(std::string_view num)
 {
     /// Prefix character after 0 that indicates the base of the number.
     static constexpr auto base_prefixes = {
-        std::pair{'b', Base::Binary}, std::pair{'o', Base::Octal}, std::pair{'x', Base::Hexadecimal}
+      std::pair{'b', Base::Binary}, std::pair{'o', Base::Octal}, std::pair{'x', Base::Hexadecimal}
     };
 
     auto throw_invalid_number = [&num]() {
@@ -191,7 +73,7 @@ BigInt::BigInt(std::string_view num)
         throw_invalid_number();
     }
 
-    bool negative = num[0] == '-';
+    negative = num[0] == '-';
     size_t index = negative ? 1z : 0z;
     Base base{Base::Decimal};
 
@@ -205,22 +87,541 @@ BigInt::BigInt(std::string_view num)
         }
     }
 
-
     if (index >= num.size()) {
         throw_invalid_number();
     }
 
-    // Character representation of all digits
-    static auto const digits = "0123456789abcdef"s;
-
-    /// Numeric representation of the base. Used for base conversion.
-    auto const base_num = std::to_underlying(base);
-
     // Convert the number to binary and store it in chunks.
-    base_to_binary(base, num.substr(index));
-
-    // Use two's complement if the number is negative.
-    if (negative) {
-        base_to_binary(base, num.substr(1));
+    try {
+        base_to_binary(num.substr(index), base);
+    } catch (std::invalid_argument const &e) {
+        throw_invalid_number();
     }
+
+    // Remove leading zeroes.
+    remove_leading_zeroes();
+}
+
+auto BigInt::operator+() const noexcept -> BigInt
+{
+    return *this;
+}
+
+auto BigInt::operator-() const noexcept -> BigInt
+{
+    BigInt result{*this};
+    result.negative = !result.negative;
+    return result;
+}
+
+auto BigInt::operator+(BigInt const &rhs) const noexcept -> BigInt
+{
+    if (is_zero()) {
+        return rhs;
+    }
+
+    if (rhs.is_zero()) {
+        return *this;
+    }
+
+    // Get number with more chunks.
+    auto const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
+    auto const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
+
+    BigInt result{larger};
+    ChunkType carry = 0;
+
+    for (size_t i = 0; i < smaller.chunks.size(); ++i) {
+        if (result.chunks[i] < chunk_max - smaller.chunks[i] - carry) {
+            result.chunks[i] += smaller.chunks[i] + carry;
+            carry = 0;
+        } else {
+            // Add with overflow.
+            result.chunks[i] += smaller.chunks[i] + carry;
+            carry = 1;
+        }
+    }
+
+    // Add carry to the rest of the larger number.
+    if (carry != 0) {
+        for (size_t i = smaller.chunks.size(); i < result.chunks.size(); ++i) {
+            if (result.chunks[i] == chunk_max) {
+                result.chunks[i] = 0;
+            } else {
+                result.chunks[i] += carry;
+                carry = 0;
+                break;
+            }
+        }
+    }
+
+    // Add carry to the end of the number.
+    if (carry != 0) {
+        result.chunks.push_back(1);
+    }
+
+    return result;
+}
+
+auto BigInt::operator-(BigInt const &rhs) const noexcept -> BigInt
+{
+    if (is_zero()) {
+        return -rhs;
+    }
+
+    if (rhs.is_zero()) {
+        return *this;
+    }
+
+    // Get larger number.
+    bool const magnitude_greater = compare_magnitude(rhs) == std::strong_ordering::greater;
+    auto const &larger = magnitude_greater ? *this : rhs;
+    auto const &smaller = magnitude_greater ? rhs : *this;
+
+    BigInt result{larger};
+    result.negative = magnitude_greater ? negative : !negative;
+    ChunkType borrow = 0;
+
+    for (size_t i = 0; i < smaller.chunks.size(); ++i) {
+        if (result.chunks[i] >= smaller.chunks[i] + borrow) {
+            result.chunks[i] -= smaller.chunks[i] + borrow;
+            borrow = 0;
+        } else {
+            // Subtract with underflow.
+            result.chunks[i] -= smaller.chunks[i] + borrow;
+            borrow = 1;
+        }
+    }
+
+    // Subtract borrow from the rest of the larger number.
+    if (borrow != 0) {
+        for (size_t i = smaller.chunks.size(); i < result.chunks.size(); ++i) {
+            if (result.chunks[i] == 0) {
+                result.chunks[i] = chunk_max;
+            } else {
+                result.chunks[i] -= borrow;
+                borrow = 0;
+                break;
+            }
+        }
+    }
+
+    // Borrow cannot be 1 at the end of the number.
+    assert(borrow == 0);
+
+    // Remove leading zeroes.
+    result.remove_leading_zeroes();
+
+    return result;
+}
+
+auto BigInt::operator*(BigInt const &rhs) const noexcept -> BigInt
+{
+    if (is_zero() || rhs.is_zero()) {
+        return BigInt{};
+    }
+
+    bool const magnitude_greater = compare_magnitude(rhs) == std::strong_ordering::greater;
+    BigInt const &larger = magnitude_greater ? *this : rhs;
+    BigInt const &smaller = magnitude_greater ? rhs : *this;
+
+    BigInt result{};
+
+    // Iterate through each bit of the smaller number in reverse order.
+    // Shift the result by one bit and add the larger number to the result if the bit is set.
+    for (size_t i = smaller.bit_count(); i-- > 0;) {
+        result <<= 1;
+
+        if (smaller.get_bit_at(i)) {
+            result += larger;
+        }
+    }
+
+    // Determine the sign of the result.
+    result.negative = negative != rhs.negative;
+
+    return result;
+}
+
+auto BigInt::operator/(BigInt const &rhs) const -> BigInt
+{
+    return div(*this, rhs).first;
+}
+
+auto BigInt::operator%(BigInt const &rhs) const -> BigInt
+{
+    return div(*this, rhs).second;
+}
+
+auto BigInt::operator&(BigInt const &rhs) const noexcept -> BigInt
+{
+    BigInt const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
+    BigInt const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
+    BigInt result{larger};
+
+    for (size_t i = 0; i < larger.chunks.size(); ++i) {
+        if (i < smaller.chunks.size()) {
+            result.chunks[i] = larger.chunks[i] & smaller.chunks[i];
+        } else {
+            result.chunks[i] = 0;
+        }
+    }
+
+    result.remove_leading_zeroes();
+    return result;
+}
+
+auto BigInt::operator|(BigInt const &rhs) const noexcept -> BigInt
+{
+    BigInt const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
+    BigInt const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
+    BigInt result{larger};
+
+    for (size_t i = 0; i < larger.chunks.size(); ++i) {
+        if (i < smaller.chunks.size()) {
+            result.chunks[i] = larger.chunks[i] | smaller.chunks[i];
+        }
+    }
+
+    return result;
+}
+
+auto BigInt::operator^(BigInt const &rhs) const noexcept -> BigInt
+{
+    BigInt const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
+    BigInt const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
+    BigInt result{larger};
+
+    for (size_t i = 0; i < larger.chunks.size(); ++i) {
+        if (i < smaller.chunks.size()) {
+            result.chunks[i] = larger.chunks[i] ^ smaller.chunks[i];
+        }
+    }
+
+    result.remove_leading_zeroes();
+    return result;
+}
+
+auto BigInt::operator~() const noexcept -> BigInt
+{
+    BigInt result{*this};
+
+    for (auto &chunk : result.chunks) {
+        chunk = ~chunk;
+    }
+
+    result.remove_leading_zeroes();
+    return result;
+}
+
+auto BigInt::operator<<(size_t rhs) const noexcept -> BigInt
+{
+    if (is_zero() || rhs == 0) {
+        return *this;
+    }
+
+    BigInt result{*this};
+    size_t chunk_shift = rhs / chunk_bits;
+    size_t bit_shift = rhs % chunk_bits;
+
+    result.chunks.insert(result.chunks.begin(), chunk_shift, 0);
+
+    if (bit_shift != 0) {
+        ChunkType carry = 0;
+
+        for (size_t i = chunk_shift; i < result.chunks.size(); ++i) {
+            ChunkType new_carry = result.chunks[i] >> (chunk_bits - bit_shift);
+            result.chunks[i] = (result.chunks[i] << bit_shift) | carry;
+            carry = new_carry;
+        }
+
+        if (carry != 0) {
+            result.chunks.push_back(carry);
+        }
+    }
+
+    return result;
+}
+
+auto BigInt::operator>>(size_t rhs) const noexcept -> BigInt
+{
+    if (is_zero() || rhs == 0) {
+        return *this;
+    }
+
+    BigInt result{*this};
+    size_t chunk_shift = rhs / chunk_bits;
+    size_t bit_shift = rhs % chunk_bits;
+
+    if (chunk_shift >= result.chunks.size()) {
+        return BigInt{};
+    }
+
+    result.chunks.erase(result.chunks.begin(), std::next(result.chunks.begin(), to_signed(chunk_shift)));
+
+    if (bit_shift != 0) {
+        ChunkType carry = 0;
+
+        for (size_t i = result.chunks.size(); i-- > 0;) {
+            ChunkType new_carry = result.chunks[i] << (chunk_bits - bit_shift);
+            result.chunks[i] = (result.chunks[i] >> bit_shift) | carry;
+            carry = new_carry;
+        }
+
+        result.remove_leading_zeroes();
+    }
+
+    return result;
+}
+
+auto BigInt::operator+=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this + rhs;
+    return *this;
+}
+
+auto BigInt::operator-=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this - rhs;
+    return *this;
+}
+
+auto BigInt::operator*=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this * rhs;
+    return *this;
+}
+
+auto BigInt::operator/=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this / rhs;
+    return *this;
+}
+
+auto BigInt::operator%=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this % rhs;
+    return *this;
+}
+
+auto BigInt::operator&=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this & rhs;
+    return *this;
+}
+
+auto BigInt::operator|=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this | rhs;
+    return *this;
+}
+
+auto BigInt::operator^=(BigInt const &rhs) noexcept -> BigInt &
+{
+    *this = *this ^ rhs;
+    return *this;
+}
+
+auto BigInt::operator<<=(size_t rhs) noexcept -> BigInt &
+{
+    *this = *this << rhs;
+    return *this;
+}
+
+auto BigInt::operator>>=(size_t rhs) noexcept -> BigInt &
+{
+    *this = *this >> rhs;
+    return *this;
+}
+
+auto BigInt::operator++() noexcept -> BigInt &
+{
+    *this += 1_bi;
+    return *this;
+}
+
+auto BigInt::operator--() noexcept -> BigInt &
+{
+    *this -= 1_bi;
+    return *this;
+}
+
+auto BigInt::operator++(int) noexcept -> BigInt
+{
+    BigInt result{*this};
+    *this += 1_bi;
+    return result;
+}
+
+auto BigInt::operator--(int) noexcept -> BigInt
+{
+    BigInt result{*this};
+    *this -= 1_bi;
+    return result;
+}
+
+auto BigInt::operator<=>(BigInt const &rhs) const noexcept -> std::strong_ordering
+{
+    if (this->is_zero() && rhs.is_zero()) {
+        return std::strong_ordering::equal;
+    }
+
+    if (negative != rhs.negative) {
+        return negative ? std::strong_ordering::less : std::strong_ordering::greater;
+    }
+
+    return negative ? rhs.compare_magnitude(*this) : compare_magnitude(rhs);
+}
+
+template<std::integral T>
+BigInt::operator T() const
+{
+    using UnsignedT = std::make_unsigned_t<T>;
+
+    constexpr auto is_signed = std::is_signed_v<T>;
+    size_t const num_bits = this->bit_count();
+
+    // Unsigned types cannot store negative numbers.
+    if (negative && !is_signed) {
+        throw std::overflow_error(std::format("Number can't fit in unsigned type '{}'", typeid(T).name()));
+    }
+    // Signed types can store 1 less bit than their signed counterpart.
+    if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed)) {
+        throw std::overflow_error(std::format("Number is too large to be converted to type '{}'", typeid(T).name()));
+    }
+
+    UnsignedT result{};
+
+    for (size_t i = 0; i < sizeof(T) * 8; i += chunk_bits) {
+        result |= static_cast<T>(this->chunks[i / chunk_bits]) << i;
+    }
+
+    return negative ? -static_cast<T>(result) : static_cast<T>(result);
+}
+
+BigInt::operator std::string() const
+{
+    return to_base(Base::Decimal);
+}
+
+auto BigInt::abs() const noexcept -> BigInt
+{
+    BigInt result{*this};
+    result.negative = false;
+    return result;
+}
+
+auto BigInt::convert(std::string const &output) noexcept -> bool
+{
+    try {
+        *this = BigInt{output};
+        return true;
+    } catch (std::invalid_argument const &) {
+        return false;
+    }
+}
+
+auto BigInt::convert(std::integral auto const &output) noexcept -> bool
+{
+    try {
+        *this = BigInt{output};
+        return true;
+    } catch (std::overflow_error const &) {
+        return false;
+    }
+}
+
+auto operator""_bi(char const *num) -> BigInt
+{
+    return BigInt{num};
+}
+
+auto BigInt::div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>
+{
+    if (denom.is_zero()) {
+        throw std::invalid_argument("Division by zero");
+    }
+
+    if (num.is_zero()) {
+        return {BigInt{}, BigInt{}};
+    }
+
+    if (num.compare_magnitude(denom) == std::strong_ordering::less) {
+        return {BigInt{}, num};
+    }
+
+    BigInt quotient{};
+    BigInt remainder{num.abs()};
+
+    while (remainder.compare_magnitude(denom) != std::strong_ordering::less) {
+        BigInt temp{denom.abs()};
+        size_t shift = remainder.bit_count() - temp.bit_count();
+
+        temp <<= shift;
+
+        while (temp.compare_magnitude(remainder) == std::strong_ordering::greater) {
+            temp >>= 1;
+            --shift;
+        }
+
+        remainder -= temp;
+        quotient += 1_bi << shift;
+    }
+
+    // For remainder, the sign is the same as the dividend.
+    remainder.negative = num.negative;
+    quotient.negative = num.negative != denom.negative;
+
+    return {quotient, remainder};
+}
+
+auto BigInt::bit_count() const -> size_t
+{
+    return (chunks.size() * chunk_bits) - static_cast<size_t>(std::countl_zero(chunks.back()));
+}
+
+/// Get the bit at the specified index.
+///
+/// @param index The index of the bit to get. 0th bit is the least significant bit and the last bit is the most
+///              significant bit.
+auto BigInt::get_bit_at(size_t index) const -> bool
+{
+    size_t const chunk_index = index / chunk_bits;
+    size_t const bit_index = index % chunk_bits;
+
+    // Even though the chunks are stored in little endian, the bits in a chunk are stored in big endian.
+    return static_cast<bool>((chunks[chunk_index] >> bit_index) & 1);
+}
+
+auto BigInt::is_zero() const -> bool
+{
+    return chunks.size() == 1 && chunks[0] == 0;
+}
+
+auto BigInt::is_negative() const -> bool
+{
+    return static_cast<bool>(chunks.back() >> (chunk_bits - 1));
+}
+
+/// Remove leading zeroes from the number.
+void BigInt::remove_leading_zeroes()
+{
+    while (chunks.size() > 1 && chunks.back() == 0) {
+        chunks.pop_back();
+    }
+}
+
+auto BigInt::compare_magnitude(BigInt const &rhs) const noexcept -> std::strong_ordering
+{
+    if (chunks.size() != rhs.chunks.size()) {
+        return chunks.size() <=> rhs.chunks.size();
+    }
+
+    for (size_t i = chunks.size(); i-- > 0;) {
+        if (chunks[i] != rhs.chunks[i]) {
+            return chunks[i] <=> rhs.chunks[i];
+        }
+    }
+
+    return std::strong_ordering::equal;
 }
