@@ -59,7 +59,7 @@ public:
     auto operator--(int) noexcept -> BigInt;
 
     auto operator<=>(BigInt const &rhs) const noexcept -> std::strong_ordering;
-    auto operator==(BigInt const &rhs) const noexcept -> bool = default;
+    auto operator==(BigInt const &rhs) const noexcept -> bool;
 
     template<std::integral T>
     auto operator<=>(T const &rhs) const noexcept -> std::strong_ordering

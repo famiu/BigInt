@@ -445,6 +445,11 @@ auto BigInt::operator<=>(BigInt const &rhs) const noexcept -> std::strong_orderi
     return negative ? rhs.compare_magnitude(*this) : compare_magnitude(rhs);
 }
 
+auto BigInt::operator==(BigInt const &rhs) const noexcept -> bool
+{
+    return (*this <=> rhs) == std::strong_ordering::equal;
+}
+
 BigInt::operator std::string() const
 {
     return to_base(Base::Decimal);
