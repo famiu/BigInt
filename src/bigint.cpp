@@ -3,14 +3,10 @@
 #include <cassert>
 #include <cmath>
 #include <format>
-#include <limits>
 #include <utility>
 
 using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
-
-constexpr auto chunk_bits = sizeof(ChunkType) * 8;
-constexpr ChunkType chunk_max = std::numeric_limits<ChunkType>::max();
 
 template<typename T>
 static constexpr auto to_unsigned(T const &num) -> std::make_unsigned_t<T>
@@ -469,32 +465,6 @@ auto BigInt::operator<=>(BigInt const &rhs) const noexcept -> std::strong_orderi
     }
 
     return negative ? rhs.compare_magnitude(*this) : compare_magnitude(rhs);
-}
-
-template<std::integral T>
-BigInt::operator T() const
-{
-    using UnsignedT = std::make_unsigned_t<T>;
-
-    constexpr auto is_signed = std::is_signed_v<T>;
-    size_t const num_bits = this->bit_count();
-
-    // Unsigned types cannot store negative numbers.
-    if (negative && !is_signed) {
-        throw std::overflow_error(std::format("Number can't fit in unsigned type '{}'", typeid(T).name()));
-    }
-    // Signed types can store 1 less bit than their signed counterpart.
-    if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed)) {
-        throw std::overflow_error(std::format("Number is too large to be converted to type '{}'", typeid(T).name()));
-    }
-
-    UnsignedT result{};
-
-    for (size_t i = 0; i < sizeof(T) * 8; i += chunk_bits) {
-        result |= static_cast<T>(this->chunks[i / chunk_bits]) << i;
-    }
-
-    return negative ? -static_cast<T>(result) : static_cast<T>(result);
 }
 
 BigInt::operator std::string() const

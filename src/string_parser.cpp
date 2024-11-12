@@ -10,8 +10,6 @@
 using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
 
-constexpr auto chunk_bits = sizeof(ChunkType) * 8;
-
 // Character representation of all digits
 static constexpr std::array<char, 16> digits = {
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'

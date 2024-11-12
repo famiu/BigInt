@@ -3,6 +3,9 @@
 #include <concepts>
 #include <cstdint>
 #include <deque>
+#include <format>
+#include <limits>
+#include <stdexcept>
 #include <string>
 
 class BigInt
@@ -56,9 +59,51 @@ public:
     auto operator--(int) noexcept -> BigInt;
 
     auto operator<=>(BigInt const &rhs) const noexcept -> std::strong_ordering;
+    auto operator==(BigInt const &rhs) const noexcept -> bool = default;
 
     template<std::integral T>
-    explicit operator T() const;
+    auto operator<=>(T const &rhs) const noexcept -> std::strong_ordering
+    {
+        try {
+            return static_cast<T>(*this) <=> rhs;
+        } catch (std::overflow_error const &) {
+            return negative ? std::strong_ordering::less : std::strong_ordering::greater;
+        }
+    }
+
+    template<std::integral T>
+    auto operator==(T const &rhs) const noexcept -> bool
+    {
+        return (*this <=> rhs) == std::strong_ordering::equal;
+    }
+
+    template<std::integral T>
+    explicit operator T() const
+    {
+        using UnsignedT = std::make_unsigned_t<T>;
+
+        constexpr auto is_signed = std::is_signed_v<T>;
+        size_t const num_bits = this->bit_count();
+
+        // Unsigned types cannot store negative numbers.
+        if (negative && !is_signed) {
+            throw std::overflow_error(std::format("Number can't fit in unsigned type '{}'", typeid(T).name()));
+        }
+        // Signed types can store 1 less bit than their signed counterpart.
+        if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed)) {
+            throw std::overflow_error(std::format("Number is too large to be converted to type '{}'", typeid(T).name())
+            );
+        }
+
+        UnsignedT result{};
+
+        for (size_t i = 0; i < sizeof(T) * 8; i += chunk_bits) {
+            result |= static_cast<T>(this->chunks[i / chunk_bits]) << i;
+        }
+
+        return negative ? -static_cast<T>(result) : static_cast<T>(result);
+    }
+
     explicit operator std::string() const;
 
     [[nodiscard]] auto abs() const noexcept -> BigInt;
@@ -82,6 +127,9 @@ private:
         Decimal = 10,
         Hexadecimal = 16
     };
+
+    constexpr static auto chunk_bits = sizeof(ChunkType) * 8;
+    constexpr static ChunkType chunk_max = std::numeric_limits<ChunkType>::max();
 
     [[nodiscard]] auto bit_count() const -> size_t;
     [[nodiscard]] auto get_bit_at(size_t index) const -> bool;
