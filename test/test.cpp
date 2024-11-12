@@ -115,9 +115,19 @@ TEST_CASE("BigInt Addition")
     BigInt a = 1234567890_bi;
     BigInt b = 987654321_bi;
 
-    BigInt c = a + b;
     REQUIRE(a + b == 2222222211_bi);
-    // REQUIRE(a + (-b) == 246913569_bi);
-    // REQUIRE((-a) + b == 246913569_bi);
-    // REQUIRE((-a) + (-b) == -2222222211_bi);
+    REQUIRE(a + (-b) == 246913569_bi);
+    REQUIRE((-a) + b == -246913569_bi);
+    REQUIRE((-a) + (-b) == -2222222211_bi);
+}
+
+TEST_CASE("BigInt Subtraction")
+{
+    BigInt a = 1234567890_bi;
+    BigInt b = 987654321_bi;
+
+    REQUIRE(a - b == 246913569_bi);
+    REQUIRE(a - (-b) == 2222222211_bi);
+    REQUIRE((-a) - b == -2222222211_bi);
+    REQUIRE((-a) - (-b) == -246913569_bi);
 }

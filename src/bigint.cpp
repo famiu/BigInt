@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <iostream>
 #include <utility>
 
 #include "utils.hpp"
@@ -96,42 +97,16 @@ auto BigInt::operator+(BigInt const &rhs) const noexcept -> BigInt
         return *this;
     }
 
-    // Get number with more chunks.
-    auto const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
-    auto const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
+    bool magnitude_greater = compare_magnitude(rhs) == std::strong_ordering::greater;
+    BigInt result;
 
-    BigInt result{larger};
-    ChunkType carry = 0;
-
-    for (size_t i = 0; i < smaller.chunks.size(); ++i) {
-        if (result.chunks[i] < chunk_max - smaller.chunks[i] - carry) {
-            result.chunks[i] += smaller.chunks[i] + carry;
-            carry = 0;
-        } else {
-            // Add with overflow.
-            result.chunks[i] += smaller.chunks[i] + carry;
-            carry = 1;
-        }
+    if (negative == rhs.negative) {
+        result = magnitude_greater ? add_magnitude(rhs) : rhs.add_magnitude(*this);
+    } else {
+        result = magnitude_greater ? subtract_magnitude(rhs) : rhs.subtract_magnitude(*this);
     }
 
-    // Add carry to the rest of the larger number.
-    if (carry != 0) {
-        for (size_t i = smaller.chunks.size(); i < result.chunks.size(); ++i) {
-            if (result.chunks[i] == chunk_max) {
-                result.chunks[i] = 0;
-            } else {
-                result.chunks[i] += carry;
-                carry = 0;
-                break;
-            }
-        }
-    }
-
-    // Add carry to the end of the number.
-    if (carry != 0) {
-        result.chunks.push_back(1);
-    }
-
+    result.negative = magnitude_greater ? negative : rhs.negative;
     return result;
 }
 
@@ -145,45 +120,16 @@ auto BigInt::operator-(BigInt const &rhs) const noexcept -> BigInt
         return *this;
     }
 
-    // Get larger number.
-    bool const magnitude_greater = compare_magnitude(rhs) == std::strong_ordering::greater;
-    auto const &larger = magnitude_greater ? *this : rhs;
-    auto const &smaller = magnitude_greater ? rhs : *this;
+    bool magnitude_greater = compare_magnitude(rhs) == std::strong_ordering::greater;
+    BigInt result;
 
-    BigInt result{larger};
-    result.negative = magnitude_greater ? negative : !negative;
-    ChunkType borrow = 0;
-
-    for (size_t i = 0; i < smaller.chunks.size(); ++i) {
-        if (result.chunks[i] >= smaller.chunks[i] + borrow) {
-            result.chunks[i] -= smaller.chunks[i] + borrow;
-            borrow = 0;
-        } else {
-            // Subtract with underflow.
-            result.chunks[i] -= smaller.chunks[i] + borrow;
-            borrow = 1;
-        }
+    if (negative == rhs.negative) {
+        result = magnitude_greater ? subtract_magnitude(rhs) : rhs.subtract_magnitude(*this);
+    } else {
+        result = magnitude_greater ? add_magnitude(rhs) : rhs.add_magnitude(*this);
     }
 
-    // Subtract borrow from the rest of the larger number.
-    if (borrow != 0) {
-        for (size_t i = smaller.chunks.size(); i < result.chunks.size(); ++i) {
-            if (result.chunks[i] == 0) {
-                result.chunks[i] = chunk_max;
-            } else {
-                result.chunks[i] -= borrow;
-                borrow = 0;
-                break;
-            }
-        }
-    }
-
-    // Borrow cannot be 1 at the end of the number.
-    assert(borrow == 0);
-
-    // Remove leading zeroes.
-    result.remove_leading_zeroes();
-
+    result.negative = magnitude_greater ? negative : !rhs.negative;
     return result;
 }
 
@@ -575,4 +521,91 @@ auto BigInt::compare_magnitude(BigInt const &rhs) const noexcept -> std::strong_
     }
 
     return std::strong_ordering::equal;
+}
+
+/// Add the magnitude of lhs and rhs.
+///
+/// @param rhs The number to add, must be smaller than or equal to lhs.
+/// @return The result of the addition.
+auto BigInt::add_magnitude(BigInt const &rhs) const noexcept -> BigInt
+{
+    assert(compare_magnitude(rhs) != std::strong_ordering::less);
+
+    BigInt result{*this};
+    ChunkType carry = 0;
+
+    for (size_t i = 0; i < rhs.chunks.size(); ++i) {
+        if (result.chunks[i] < chunk_max - rhs.chunks[i] - carry) {
+            result.chunks[i] += rhs.chunks[i] + carry;
+            carry = 0;
+        } else {
+            // Add with overflow.
+            result.chunks[i] += rhs.chunks[i] + carry;
+            carry = 1;
+        }
+    }
+
+    // Add carry to the rest of the *this number.
+    if (carry != 0) {
+        for (size_t i = rhs.chunks.size(); i < result.chunks.size(); ++i) {
+            if (result.chunks[i] == chunk_max) {
+                result.chunks[i] = 0;
+            } else {
+                result.chunks[i] += carry;
+                carry = 0;
+                break;
+            }
+        }
+    }
+
+    // Add carry to the end of the number.
+    if (carry != 0) {
+        result.chunks.push_back(1);
+    }
+
+    return result;
+}
+
+/// Subtract the magnitude of rhs from lhs.
+///
+/// @param rhs The number to subtract, must be smaller than or equal to lhs.
+/// @return The result of the subtraction.
+auto BigInt::subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt
+{
+    assert(compare_magnitude(rhs) != std::strong_ordering::less);
+
+    BigInt result{*this};
+    ChunkType borrow = 0;
+
+    for (size_t i = 0; i < rhs.chunks.size(); ++i) {
+        if (result.chunks[i] >= rhs.chunks[i] + borrow) {
+            result.chunks[i] -= rhs.chunks[i] + borrow;
+            borrow = 0;
+        } else {
+            // Subtract with underflow.
+            result.chunks[i] -= rhs.chunks[i] + borrow;
+            borrow = 1;
+        }
+    }
+
+    // Subtract borrow from the rest of the *this number.
+    if (borrow != 0) {
+        for (size_t i = rhs.chunks.size(); i < result.chunks.size(); ++i) {
+            if (result.chunks[i] == 0) {
+                result.chunks[i] = chunk_max;
+            } else {
+                result.chunks[i] -= borrow;
+                borrow = 0;
+                break;
+            }
+        }
+    }
+
+    // Borrow cannot be 1 at the end of the number.
+    assert(borrow == 0);
+
+    // Remove leading zeroes.
+    result.remove_leading_zeroes();
+
+    return result;
 }

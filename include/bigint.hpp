@@ -141,6 +141,9 @@ private:
 
     [[nodiscard]] auto compare_magnitude(BigInt const &rhs) const noexcept -> std::strong_ordering;
 
+    [[nodiscard]] BigInt add_magnitude(BigInt const &rhs) const noexcept;
+    [[nodiscard]] BigInt subtract_magnitude(BigInt const &rhs) const noexcept;
+
     static auto is_valid_digit(Base base, char c) -> bool;
     static auto char_to_digit(Base base, char c) -> ChunkType;
     static auto long_divide(std::string_view num, std::string &quotient, Base base, ChunkType divisor) -> ChunkType;
