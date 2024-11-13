@@ -122,7 +122,7 @@ public:
     ///
     /// @param[out] output Result of the conversion.
     /// @return Whether the conversion was successful.
-    auto convert(std::string &output) const noexcept -> bool
+    [[nodiscard]] auto convert(std::string &output) const noexcept -> bool
     {
         try {
             output = static_cast<std::string>(*this);
@@ -137,7 +137,7 @@ public:
     /// @tparam T The type to convert the number to.
     /// @param[out] output Result of the conversion.
     /// @return Whether the conversion was successful.
-    auto convert(std::integral auto &output) const noexcept -> bool
+    [[nodiscard]] auto convert(std::integral auto &output) const noexcept -> bool
     {
         try {
             output = static_cast<decltype(output)>(*this);
@@ -152,7 +152,9 @@ public:
     /// @param num The dividend.
     /// @param denom The divisor.
     /// @return The quotient and remainder.
-    static auto div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>;
+    ///
+    /// @throw std::domain_error if the divisor is 0.
+    [[nodiscard]] static auto div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>;
 
     /// @brief Raise the number to the specified power.
     ///
