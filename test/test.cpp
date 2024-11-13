@@ -140,46 +140,76 @@ TEST_CASE("BigInt to String conversion")
 
 TEST_CASE("BigInt Unary operators")
 {
-    REQUIRE(+a == 1234567890_bi);
-    REQUIRE(-a == -1234567890_bi);
-    REQUIRE(+b == 987654321_bi);
-    REQUIRE(-b == -987654321_bi);
+    SECTION("Unary plus")
+    {
+        REQUIRE(+a == 1234567890_bi);
+        REQUIRE(+b == 987654321_bi);
+    }
+
+    SECTION("Unary minus")
+    {
+        REQUIRE(-a == -1234567890_bi);
+        REQUIRE(-b == -987654321_bi);
+    }
 }
 
 TEST_CASE("BigInt Comparison")
 {
-    REQUIRE(a <=> b == std::strong_ordering::greater);
-    REQUIRE(a <=> a == std::strong_ordering::equal);
-    REQUIRE(b <=> a == std::strong_ordering::less);
-    REQUIRE(a == 1234567890);
-    REQUIRE(a == 1234567890_bi);
-    REQUIRE(1234567890 == a);
-    REQUIRE(1234567890_bi == a);
-    REQUIRE(a != b);
-    REQUIRE(a != 987654321);
-    REQUIRE(a != 987654321_bi);
-    REQUIRE(987654321 != a);
-    REQUIRE(987654321_bi != a);
-    REQUIRE(a > b);
-    REQUIRE(a >= b);
-    REQUIRE(b < a);
-    REQUIRE(b <= a);
-    REQUIRE(-a <=> -b == std::strong_ordering::less);
-    REQUIRE(-a <=> -a == std::strong_ordering::equal);
-    REQUIRE(-b <=> -a == std::strong_ordering::greater);
-    REQUIRE(-a == -1234567890);
-    REQUIRE(-a == -1234567890_bi);
-    REQUIRE(-1234567890 == -a);
-    REQUIRE(-1234567890_bi == -a);
-    REQUIRE(-a != -b);
-    REQUIRE(-a != -987654321);
-    REQUIRE(-a != -987654321_bi);
-    REQUIRE(-987654321 != -a);
-    REQUIRE(-987654321_bi != -a);
-    REQUIRE(-a < -b);
-    REQUIRE(-a <= -b);
-    REQUIRE(-b > -a);
-    REQUIRE(-b >= -a);
+    SECTION("Three-way comparison")
+    {
+        REQUIRE(a <=> b == std::strong_ordering::greater);
+        REQUIRE(a <=> a == std::strong_ordering::equal);
+        REQUIRE(b <=> a == std::strong_ordering::less);
+    }
+
+    SECTION("Equality and inequality")
+    {
+        REQUIRE(a == 1234567890);
+        REQUIRE(a == 1234567890_bi);
+        REQUIRE(1234567890 == a);
+        REQUIRE(1234567890_bi == a);
+        REQUIRE(a != b);
+        REQUIRE(a != 987654321);
+        REQUIRE(a != 987654321_bi);
+        REQUIRE(987654321 != a);
+        REQUIRE(987654321_bi != a);
+    }
+
+    SECTION("Greater and less than")
+    {
+        REQUIRE(a > b);
+        REQUIRE(a >= b);
+        REQUIRE(b < a);
+        REQUIRE(b <= a);
+    }
+
+    SECTION("Negative three-way comparison")
+    {
+        REQUIRE(-a <=> -b == std::strong_ordering::less);
+        REQUIRE(-a <=> -a == std::strong_ordering::equal);
+        REQUIRE(-b <=> -a == std::strong_ordering::greater);
+    }
+
+    SECTION("Negative equality and inequality")
+    {
+        REQUIRE(-a == -1234567890);
+        REQUIRE(-a == -1234567890_bi);
+        REQUIRE(-1234567890 == -a);
+        REQUIRE(-1234567890_bi == -a);
+        REQUIRE(-a != -b);
+        REQUIRE(-a != -987654321);
+        REQUIRE(-a != -987654321_bi);
+        REQUIRE(-987654321 != -a);
+        REQUIRE(-987654321_bi != -a);
+    }
+
+    SECTION("Negative greater and less than")
+    {
+        REQUIRE(-a < -b);
+        REQUIRE(-a <= -b);
+        REQUIRE(-b > -a);
+        REQUIRE(-b >= -a);
+    }
 }
 
 TEST_CASE("BigInt Addition")
@@ -200,14 +230,21 @@ TEST_CASE("BigInt Subtraction")
 
 TEST_CASE("BigInt Bitshift")
 {
-    REQUIRE(a << 1 == 2469135780_bi);
-    REQUIRE(a >> 1 == 617283945_bi);
-    REQUIRE(b << 1 == 1975308642_bi);
-    REQUIRE(b >> 1 == 493827160_bi);
-    REQUIRE(a << 10 == 1264197519360_bi);
-    REQUIRE(a >> 10 == 1205632_bi);
-    REQUIRE(a >> 100 == 0_bi);
-    REQUIRE(b << 100 == 1252000592833654354567462788044156829696_bi);
+    SECTION("Left shift")
+    {
+        REQUIRE(a << 1 == 2469135780_bi);
+        REQUIRE(b << 1 == 1975308642_bi);
+        REQUIRE(a << 10 == 1264197519360_bi);
+        REQUIRE(b << 100 == 1252000592833654354567462788044156829696_bi);
+    }
+
+    SECTION("Right shift")
+    {
+        REQUIRE(a >> 1 == 617283945_bi);
+        REQUIRE(b >> 1 == 493827160_bi);
+        REQUIRE(a >> 10 == 1205632_bi);
+        REQUIRE(a >> 100 == 0_bi);
+    }
 }
 
 TEST_CASE("BigInt Multiplication")
@@ -220,55 +257,95 @@ TEST_CASE("BigInt Multiplication")
 
 TEST_CASE("BigInt Division and Modulo")
 {
-    REQUIRE(a / b == 1_bi);
-    REQUIRE(a / (-b) == -1_bi);
-    REQUIRE((-a) / b == -1_bi);
-    REQUIRE((-a) / (-b) == 1_bi);
-    REQUIRE(a % b == 246913569_bi);
-    REQUIRE(a % (-b) == 246913569_bi);
-    REQUIRE((-a) % b == -246913569_bi);
-    REQUIRE((-a) % (-b) == -246913569_bi);
-
     BigInt c = 106048574244834508800_bi;
     BigInt d = -429391241160_bi;
 
-    REQUIRE(c / d == -246974237_bi);
-    REQUIRE(c % d == 84860513880_bi);
+    SECTION("BigInt Division")
+    {
+        REQUIRE(a / b == 1_bi);
+        REQUIRE(a / (-b) == -1_bi);
+        REQUIRE((-a) / b == -1_bi);
+        REQUIRE((-a) / (-b) == 1_bi);
+        REQUIRE(c / d == -246974237_bi);
+    }
+
+    SECTION("BigInt Modulo")
+    {
+        REQUIRE(a % b == 246913569_bi);
+        REQUIRE(a % (-b) == 246913569_bi);
+        REQUIRE((-a) % b == -246913569_bi);
+        REQUIRE((-a) % (-b) == -246913569_bi);
+        REQUIRE(c % d == 84860513880_bi);
+    }
 }
 
 TEST_CASE("BigInt Power")
 {
-    REQUIRE(a.pow(0) == 1_bi);
-    REQUIRE(a.pow(1) == 1234567890_bi);
-    REQUIRE(a.pow(2) == 1524157875019052100_bi);
-    REQUIRE(a.pow(5) == 2867971860299718107233761438093672048294900000_bi);
-    REQUIRE(
-      a.pow(10) == 8225262591471025795047611436615355477641378922955141680937016996764162077997366010000000000_bi
-    );
-    REQUIRE((-a).pow(0) == 1_bi);
-    REQUIRE((-a).pow(1) == -1234567890_bi);
-    REQUIRE((-a).pow(2) == 1524157875019052100_bi);
-    REQUIRE((-a).pow(5) == -2867971860299718107233761438093672048294900000_bi);
-    REQUIRE((0_bi).pow(1000) == 0_bi);
-    REQUIRE((1_bi).pow(1000) == 1_bi);
-    REQUIRE((0_bi).pow(0) == 1_bi);
+    SECTION("Zero power")
+    {
+        REQUIRE(a.pow(0) == 1_bi);
+        REQUIRE((-a).pow(0) == 1_bi);
+    }
+
+    SECTION("Power of one")
+    {
+        REQUIRE(a.pow(1) == 1234567890_bi);
+        REQUIRE((-a).pow(1) == -1234567890_bi);
+    }
+
+    SECTION("Positive powers")
+    {
+        REQUIRE(a.pow(2) == 1524157875019052100_bi);
+        REQUIRE(a.pow(5) == 2867971860299718107233761438093672048294900000_bi);
+        REQUIRE(
+          a.pow(10) == 8225262591471025795047611436615355477641378922955141680937016996764162077997366010000000000_bi
+        );
+    }
+
+    SECTION("Negative base positive powers")
+    {
+        REQUIRE((-a).pow(2) == 1524157875019052100_bi);
+        REQUIRE((-a).pow(5) == -2867971860299718107233761438093672048294900000_bi);
+    }
+
+    SECTION("Edge cases")
+    {
+        REQUIRE((0_bi).pow(1000) == 0_bi);
+        REQUIRE((1_bi).pow(1000) == 1_bi);
+        REQUIRE((0_bi).pow(0) == 1_bi);
+    }
 }
 
 TEST_CASE("BigInt std::format")
 {
-    REQUIRE(std::format("{}", 1234567890_bi) == "1234567890");
-    REQUIRE(std::format("{:b}", 1234567890_bi) == "1001001100101100000001011010010");
-    REQUIRE(std::format("{:o}", 1234567890_bi) == "11145401322");
-    REQUIRE(std::format("{:x}", 1234567890_bi) == "499602d2");
-    REQUIRE(std::format("{:X}", 1234567890_bi) == "499602D2");
-    REQUIRE(std::format("{:b}", -1234567890_bi) == "-1001001100101100000001011010010");
-    REQUIRE(std::format("{:o}", -1234567890_bi) == "-11145401322");
-    REQUIRE(std::format("{:x}", -1234567890_bi) == "-499602d2");
-    REQUIRE(std::format("{:X}", -1234567890_bi) == "-499602D2");
-    REQUIRE(std::format("{:#b}", 1234567890_bi) == "0b1001001100101100000001011010010");
-    REQUIRE(std::format("{:#B}", 1234567890_bi) == "0B1001001100101100000001011010010");
-    REQUIRE(std::format("{:#x}", 1234567890_bi) == "0x499602d2");
-    REQUIRE(std::format("{:#X}", 1234567890_bi) == "0X499602D2");
+    SECTION("No format specifier")
+    {
+        REQUIRE(std::format("{}", 1234567890_bi) == "1234567890");
+    }
+
+    SECTION("Binary format")
+    {
+        REQUIRE(std::format("{:b}", 1234567890_bi) == "1001001100101100000001011010010");
+        REQUIRE(std::format("{:b}", -1234567890_bi) == "-1001001100101100000001011010010");
+        REQUIRE(std::format("{:#b}", 1234567890_bi) == "0b1001001100101100000001011010010");
+        REQUIRE(std::format("{:#B}", 1234567890_bi) == "0B1001001100101100000001011010010");
+    }
+
+    SECTION("Octal format")
+    {
+        REQUIRE(std::format("{:o}", 1234567890_bi) == "11145401322");
+        REQUIRE(std::format("{:o}", -1234567890_bi) == "-11145401322");
+    }
+
+    SECTION("Hexadecimal format")
+    {
+        REQUIRE(std::format("{:x}", 1234567890_bi) == "499602d2");
+        REQUIRE(std::format("{:X}", 1234567890_bi) == "499602D2");
+        REQUIRE(std::format("{:x}", -1234567890_bi) == "-499602d2");
+        REQUIRE(std::format("{:X}", -1234567890_bi) == "-499602D2");
+        REQUIRE(std::format("{:#x}", 1234567890_bi) == "0x499602d2");
+        REQUIRE(std::format("{:#X}", 1234567890_bi) == "0X499602D2");
+    }
 }
 
 // NOLINTEND(cppcoreguidelines-avoid-do-while,bugprone-chained-comparison)
