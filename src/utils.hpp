@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <source_location>
 #include <stdexcept>
 #include <utility>
 
@@ -32,6 +33,17 @@ static constexpr auto to_signed(T const &num) -> std::make_signed_t<T>
     }
 }
 
+/// @brief Get the raw function name of a function with the type as a template parameter.
+template<typename T>
+constexpr auto type_to_string_raw() -> std::string_view
+{
+    return std::source_location::current().function_name();
+}
+
+/// @brief Raw function name of long double type, used to find the length of the prefix and suffix of the raw string.
+constexpr std::string_view long_double_raw_string = type_to_string_raw<long double>();
+constexpr std::string_view long_double_string = "long double";
+
 template<std::size_t... Idxs>
 constexpr auto substring_as_array(std::string_view str, std::index_sequence<Idxs...> /*unused*/)
 {
@@ -41,29 +53,19 @@ constexpr auto substring_as_array(std::string_view str, std::index_sequence<Idxs
 template<typename T>
 constexpr auto type_name_array()
 {
-#if defined(__clang__)
-    constexpr auto prefix = std::string_view{"[T = "};
-    constexpr auto suffix = std::string_view{"]"};
-    constexpr auto function = std::string_view{__PRETTY_FUNCTION__};
-#elif defined(__GNUC__)
-    constexpr auto prefix = std::string_view{"with T = "};
-    constexpr auto suffix = std::string_view{"]"};
-    constexpr auto function = std::string_view{__PRETTY_FUNCTION__};
-#elif defined(_MSC_VER)
-    constexpr auto prefix = std::string_view{"type_name_array<"};
-    constexpr auto suffix = std::string_view{">(void)"};
-    constexpr auto function = std::string_view{__FUNCSIG__};
-#else
-#   error Unsupported compiler
-#endif
+    // Find prefix and suffix of every raw string using known type, by searching for the known type in the raw string.
+    static constexpr auto prefix_len = long_double_raw_string.find(long_double_string);
+    static constexpr auto suffix_len = long_double_raw_string.size() - prefix_len - long_double_string.size();
 
-    constexpr auto start = function.find(prefix) + prefix.size();
-    constexpr auto end = function.rfind(suffix);
+    constexpr std::string_view type_raw_string = type_to_string_raw<T>();
+    constexpr auto start = prefix_len;
+    constexpr auto end = type_raw_string.size() - suffix_len;
 
     static_assert(start < end);
 
-    constexpr auto name = function.substr(start, (end - start));
+    constexpr auto name = type_raw_string.substr(start, (end - start));
 
+    // Convert the substring to a std::array so it can be used in a constexpr context.
     return substring_as_array(name, std::make_index_sequence<name.size()>{});
 };
 
