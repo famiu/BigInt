@@ -255,7 +255,7 @@ auto BigInt::format_to_decimal() const -> std::string
 {
     BigInt quotient{*this};
     BigInt remainder;
-    static auto const ten = 10_bi;
+    static auto const ten = BigInt(10);
     static auto const log2_10 = std::log2(10);
     std::string result;
     // Reserve enough space for the result.

@@ -8,7 +8,7 @@ using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
 
 // Avoid having to convert the number to a BigInt over and over again.
-static auto const one = 1_bi;
+static auto const one = BigInt(1);
 
 BigInt::BigInt()
 {
@@ -119,6 +119,12 @@ auto BigInt::operator*(BigInt const &rhs) const noexcept -> BigInt
 {
     if (is_zero() || rhs.is_zero()) {
         return BigInt{};
+    }
+    if (*this == one) {
+        return rhs;
+    }
+    if (rhs == one) {
+        return *this;
     }
 
     bool const magnitude_greater = compare_magnitude(rhs) == std::strong_ordering::greater;
@@ -382,6 +388,46 @@ auto BigInt::div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, Bi
     quotient.negative = num.negative != denom.negative;
 
     return {quotient, remainder};
+}
+
+auto BigInt::pow(size_t power) const noexcept -> BigInt
+{
+    // x^0 = 1
+    // NOTE: 0^0 also returns 1.
+    if (power == 0) {
+        return one;
+    }
+
+    // x^1 = x
+    // 0^x = 0
+    // 1^x = 1
+    if (power == 1 || is_zero() || *this == one) {
+        return *this;
+    }
+
+    static constexpr auto mask = static_cast<size_t>(1) << (sizeof(size_t) * 8 - 1);
+    auto const power_leading_zeroes = static_cast<size_t>(std::countl_zero(power));
+    // Get amount of bits in the power excluding leading zeroes.
+    auto const power_bit_count = (sizeof(size_t) * 8) - power_leading_zeroes;
+
+    // Get rid of leading zeroes so that we can iterate through the bits of the power.
+    power <<= power_leading_zeroes;
+
+    BigInt result(1);
+
+    // Iterate through the bits of the power, starting from the most significant bit.
+    // Square the result in each iteration, and multiply it by the base if the bit is set.
+    // After each iteration, left shift the power by 1 to get the next bit.
+    for (size_t i = 0; i < power_bit_count; ++i) {
+        result *= result;
+        if ((power & mask) != 0) {
+            result *= *this;
+        }
+
+        power <<= 1;
+    }
+
+    return result;
 }
 
 auto BigInt::bit_count() const -> size_t

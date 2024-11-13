@@ -236,6 +236,24 @@ TEST_CASE("BigInt Division and Modulo")
     REQUIRE(c % d == 84860513880_bi);
 }
 
+TEST_CASE("BigInt Power")
+{
+    REQUIRE(a.pow(0) == 1_bi);
+    REQUIRE(a.pow(1) == 1234567890_bi);
+    REQUIRE(a.pow(2) == 1524157875019052100_bi);
+    REQUIRE(a.pow(5) == 2867971860299718107233761438093672048294900000_bi);
+    REQUIRE(
+      a.pow(10) == 8225262591471025795047611436615355477641378922955141680937016996764162077997366010000000000_bi
+    );
+    REQUIRE((-a).pow(0) == 1_bi);
+    REQUIRE((-a).pow(1) == -1234567890_bi);
+    REQUIRE((-a).pow(2) == 1524157875019052100_bi);
+    REQUIRE((-a).pow(5) == -2867971860299718107233761438093672048294900000_bi);
+    REQUIRE((0_bi).pow(1000) == 0_bi);
+    REQUIRE((1_bi).pow(1000) == 1_bi);
+    REQUIRE((0_bi).pow(0) == 1_bi);
+}
+
 TEST_CASE("BigInt std::format")
 {
     REQUIRE(std::format("{}", 1234567890_bi) == "1234567890");

@@ -26,7 +26,7 @@ public:
         auto const num_unsigned = to_unsigned(negative ? -num : num);
         auto const num_size = sizeof(num_unsigned) * 8;
 
-        for (auto i = 0; i < num_size; i += chunk_bits) {
+        for (size_t i = 0; i < num_size; i += chunk_bits) {
             chunks.push_back(static_cast<ChunkType>((num_unsigned >> i) & chunk_max));
         }
 
@@ -149,9 +149,17 @@ public:
     ///
     /// @param num The dividend.
     /// @param denom The divisor.
-    ///
     /// @return The quotient and remainder.
     static auto div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>;
+
+    /// @brief Raise the number to the specified power.
+    ///
+    /// @param power The power to raise the number to.
+    /// @return The result of the exponentiation.
+    ///
+    /// @note Only works for non-negative powers.
+    /// @note 0^0 returns 1.
+    [[nodiscard]] auto pow(size_t power) const noexcept -> BigInt;
 
     friend std::formatter<BigInt>;
     friend auto operator""_bi(char const *) -> BigInt;
@@ -172,9 +180,9 @@ private:
     };
 
     /// @brief Number of bits in a chunk.
-    constexpr static auto chunk_bits = sizeof(ChunkType) * 8;
+    static constexpr auto chunk_bits = sizeof(ChunkType) * 8;
     /// @brief Maximum value a chunk can store.
-    constexpr static ChunkType chunk_max = std::numeric_limits<ChunkType>::max();
+    static constexpr ChunkType chunk_max = std::numeric_limits<ChunkType>::max();
 
     /// @brief Get the number of bits in the number.
     [[nodiscard]] auto bit_count() const -> size_t;
