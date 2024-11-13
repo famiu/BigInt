@@ -77,6 +77,18 @@ TEST_CASE("BigInt String constructor")
         REQUIRE(BigInt("-0b1010101") == -0b1010101);
         REQUIRE(BigInt("-0x7fffffffffffffff") == -0x7fffffffffffffffLL);
     }
+
+    SECTION("Invalid numbers")
+    {
+        REQUIRE_THROWS_AS(BigInt("1234567890a"), std::invalid_argument);
+        REQUIRE_THROWS_AS(BigInt("-987654321a"), std::invalid_argument);
+        REQUIRE_THROWS_AS(BigInt("0b2"), std::invalid_argument);
+        REQUIRE_THROWS_AS(BigInt("0xg"), std::invalid_argument);
+        REQUIRE_THROWS_AS(BigInt("0x"), std::invalid_argument);
+        REQUIRE_THROWS_AS(BigInt(""), std::invalid_argument);
+        REQUIRE_THROWS_AS(BigInt("-"), std::invalid_argument);
+        REQUIRE_THROWS_AS(BigInt("-0x"), std::invalid_argument);
+    }
 }
 
 TEST_CASE("BigInt Literals")
@@ -122,6 +134,29 @@ TEST_CASE("BigInt Literals")
 
 BigInt const a = 1234567890_bi;
 BigInt const b = 987654321_bi;
+
+TEST_CASE("BigInt to Integral conversion")
+{
+    SECTION("Positive numbers")
+    {
+        REQUIRE(static_cast<int>(a) == 1234567890);
+        REQUIRE(static_cast<long long>(a) == 1234567890);
+        REQUIRE(static_cast<unsigned long long>(a) == 1234567890);
+    }
+
+    SECTION("Negative numbers")
+    {
+        REQUIRE(static_cast<int>(-a) == -1234567890);
+        REQUIRE(static_cast<long long>(-a) == -1234567890);
+    }
+
+    SECTION("Overflow/underflow")
+    {
+        REQUIRE_THROWS_AS(static_cast<int>(0x1234567890ABCDEF0123_bi), std::overflow_error);
+        REQUIRE_THROWS_AS(static_cast<long long>(0x1234567890ABCDEF0123456789ABCDEF_bi), std::overflow_error);
+        REQUIRE_THROWS_AS(static_cast<unsigned long long>(-1234_bi), std::underflow_error);
+    }
+}
 
 TEST_CASE("BigInt to String conversion")
 {
@@ -267,6 +302,11 @@ TEST_CASE("BigInt Division and Modulo")
         REQUIRE((-a) / b == -1_bi);
         REQUIRE((-a) / (-b) == 1_bi);
         REQUIRE(c / d == -246974237_bi);
+
+        SECTION("Division by zero")
+        {
+            REQUIRE_THROWS_AS(a / 0_bi, std::invalid_argument);
+        }
     }
 
     SECTION("BigInt Modulo")
@@ -276,6 +316,11 @@ TEST_CASE("BigInt Division and Modulo")
         REQUIRE((-a) % b == -246913569_bi);
         REQUIRE((-a) % (-b) == -246913569_bi);
         REQUIRE(c % d == 84860513880_bi);
+
+        SECTION("Division by zero")
+        {
+            REQUIRE_THROWS_AS(a % 0_bi, std::invalid_argument);
+        }
     }
 }
 
@@ -345,6 +390,12 @@ TEST_CASE("BigInt std::format")
         REQUIRE(std::format("{:X}", -1234567890_bi) == "-499602D2");
         REQUIRE(std::format("{:#x}", 1234567890_bi) == "0x499602d2");
         REQUIRE(std::format("{:#X}", 1234567890_bi) == "0X499602D2");
+    }
+
+    SECTION("Decimal format")
+    {
+        REQUIRE(std::format("{:d}", 1234567890_bi) == "1234567890");
+        REQUIRE(std::format("{:d}", -1234567890_bi) == "-1234567890");
     }
 }
 
