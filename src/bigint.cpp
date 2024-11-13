@@ -2,11 +2,13 @@
 
 #include <cassert>
 #include <cmath>
-#include <format>
 #include <utility>
 
 using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
+
+// Avoid having to convert the number to a BigInt over and over again.
+static auto const one = 1_bi;
 
 BigInt::BigInt()
 {
@@ -334,27 +336,27 @@ auto BigInt::operator>>=(size_t rhs) noexcept -> BigInt &
 
 auto BigInt::operator++() noexcept -> BigInt &
 {
-    *this += 1_bi;
+    *this += one;
     return *this;
 }
 
 auto BigInt::operator--() noexcept -> BigInt &
 {
-    *this -= 1_bi;
+    *this -= one;
     return *this;
 }
 
 auto BigInt::operator++(int) noexcept -> BigInt
 {
     BigInt result{*this};
-    *this += 1_bi;
+    *this += one;
     return result;
 }
 
 auto BigInt::operator--(int) noexcept -> BigInt
 {
     BigInt result{*this};
-    *this -= 1_bi;
+    *this -= one;
     return result;
 }
 
@@ -422,7 +424,7 @@ auto BigInt::div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, Bi
         }
 
         remainder -= temp;
-        quotient += 1_bi << shift;
+        quotient += one << shift;
     }
 
     // For remainder, the sign is the same as the dividend.
