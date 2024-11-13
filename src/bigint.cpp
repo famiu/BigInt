@@ -254,13 +254,13 @@ auto BigInt::operator*=(BigInt const &rhs) noexcept -> BigInt &
     return *this;
 }
 
-auto BigInt::operator/=(BigInt const &rhs) noexcept -> BigInt &
+auto BigInt::operator/=(BigInt const &rhs) -> BigInt &
 {
     *this = *this / rhs;
     return *this;
 }
 
-auto BigInt::operator%=(BigInt const &rhs) noexcept -> BigInt &
+auto BigInt::operator%=(BigInt const &rhs) -> BigInt &
 {
     *this = *this % rhs;
     return *this;

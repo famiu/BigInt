@@ -23,7 +23,7 @@ public:
     BigInt(BigInt const &rhs) = default;
     BigInt(BigInt &&rhs) noexcept = default;
 
-    explicit BigInt(std::integral auto const &num) : negative{num < 0}
+    explicit BigInt(std::integral auto const &num) noexcept : negative{num < 0}
     {
         auto const num_unsigned = detail::to_unsigned(negative ? -num : num);
         auto const num_size = sizeof(num_unsigned) * 8;
@@ -57,8 +57,8 @@ public:
     auto operator+=(BigInt const &rhs) noexcept -> BigInt &;
     auto operator-=(BigInt const &rhs) noexcept -> BigInt &;
     auto operator*=(BigInt const &rhs) noexcept -> BigInt &;
-    auto operator/=(BigInt const &rhs) noexcept -> BigInt &;
-    auto operator%=(BigInt const &rhs) noexcept -> BigInt &;
+    auto operator/=(BigInt const &rhs) -> BigInt &;
+    auto operator%=(BigInt const &rhs) -> BigInt &;
 
     auto operator<<=(size_t rhs) noexcept -> BigInt &;
     auto operator>>=(size_t rhs) noexcept -> BigInt &;
