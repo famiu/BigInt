@@ -179,8 +179,8 @@ void BigInt::decimal_base_to_binary(std::string_view num)
             current_chunk = remainder;
         } else {
             // Full chunk, push it to the chunks vector and reset the chunk.
-            // The most significant half of the chunk is the remainder from the previous iteration.
-            chunks.push_back((current_chunk << half_chunk_bits) | remainder);
+            // The most significant half of the chunk is the remainder from this iteration.
+            chunks.push_back((remainder << half_chunk_bits) | current_chunk);
             current_chunk = 0;
         }
 
