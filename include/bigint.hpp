@@ -93,12 +93,12 @@ public:
 
         // Unsigned types cannot store negative numbers.
         if (negative && !is_signed) {
-            throw std::underflow_error(std::format("Number can't fit in unsigned type '{}'", typeid(T).name()));
+            throw std::underflow_error(std::format("Number can't fit in unsigned type '{}'", type_name<T>()));
         }
         // Signed types can store 1 less bit than their signed counterpart.
         if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed)) {
             throw std::overflow_error(  // clang-format off
-                    std::format("Number is too large to be converted to type '{}'", typeid(T).name())
+                    std::format("Number is too large to be converted to type '{}'", type_name<T>())
             );  // clang-format on
         }
 
