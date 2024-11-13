@@ -380,7 +380,7 @@ auto BigInt::operator==(BigInt const &rhs) const noexcept -> bool
 
 BigInt::operator std::string() const
 {
-    return to_base(Base::Decimal);
+    return format_to_base(Base::Decimal);
 }
 
 auto BigInt::abs() const noexcept -> BigInt
@@ -388,6 +388,11 @@ auto BigInt::abs() const noexcept -> BigInt
     BigInt result{*this};
     result.negative = false;
     return result;
+}
+
+auto operator<<(std::ostream &os, BigInt const &num) -> std::ostream &
+{
+    return os << static_cast<std::string>(num);
 }
 
 auto operator""_bi(char const *num) -> BigInt

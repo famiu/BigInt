@@ -200,4 +200,21 @@ TEST_CASE("BigInt Division and Modulo")
     REQUIRE(c % d == 84860513880_bi);
 }
 
+TEST_CASE("BigInt std::format")
+{
+    REQUIRE(std::format("{}", 1234567890_bi) == "1234567890");
+    REQUIRE(std::format("{:b}", 1234567890_bi) == "1001001100101100000001011010010");
+    REQUIRE(std::format("{:o}", 1234567890_bi) == "11145401322");
+    REQUIRE(std::format("{:x}", 1234567890_bi) == "499602d2");
+    REQUIRE(std::format("{:X}", 1234567890_bi) == "499602D2");
+    REQUIRE(std::format("{:b}", -1234567890_bi) == "-1001001100101100000001011010010");
+    REQUIRE(std::format("{:o}", -1234567890_bi) == "-11145401322");
+    REQUIRE(std::format("{:x}", -1234567890_bi) == "-499602d2");
+    REQUIRE(std::format("{:X}", -1234567890_bi) == "-499602D2");
+    REQUIRE(std::format("{:#b}", 1234567890_bi) == "0b1001001100101100000001011010010");
+    REQUIRE(std::format("{:#B}", 1234567890_bi) == "0B1001001100101100000001011010010");
+    REQUIRE(std::format("{:#x}", 1234567890_bi) == "0x499602d2");
+    REQUIRE(std::format("{:#X}", 1234567890_bi) == "0X499602D2");
+}
+
 // NOLINTEND(cppcoreguidelines-avoid-do-while,bugprone-chained-comparison)

@@ -7,6 +7,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 
 #include "utils.hpp"
 
@@ -144,6 +145,8 @@ public:
     }
 
     static auto div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>;
+
+    friend std::formatter<BigInt>;
     friend auto operator""_bi(char const *) -> BigInt;
 
 private:
@@ -182,19 +185,68 @@ private:
     void decimal_base_to_binary(std::string_view num);
     void base_to_binary(std::string_view num, Base base);
 
-    [[nodiscard]] auto to_power_of_two_base(Base base) const -> std::string;
-    [[nodiscard]] auto to_decimal() const -> std::string;
-    [[nodiscard]] auto to_base(Base base) const -> std::string;
+    [[nodiscard]] auto format_to_power_of_two_base(Base base, bool add_prefix = false, bool capitalize = false) const
+      -> std::string;
+    [[nodiscard]] auto format_to_decimal() const -> std::string;
+    [[nodiscard]] auto format_to_base(Base base, bool add_prefix = false, bool capitalize = false) const -> std::string;
 };
 
+auto operator<<(std::ostream &os, BigInt const &num) -> std::ostream &;
 auto operator""_bi(char const *) -> BigInt;
 
 template<>
 struct std::formatter<BigInt> : std::formatter<std::string>
 {
-    static auto format(BigInt const &num, std::format_context &ctx)
+    bool add_prefix = false;
+    bool capitalize = false;
+    BigInt::Base base{BigInt::Base::Decimal};
+
+    constexpr auto parse(std::format_parse_context &ctx) -> decltype(ctx.begin())
     {
-        return std::format_to(ctx.out(), "{}", static_cast<std::string>(num));
+        auto const *it = ctx.begin();
+
+        if (it == ctx.end() || *it == '}') {
+            return it;
+        }
+
+        if (*it == '#') {
+            add_prefix = true;
+            std::advance(it, 1);
+        }
+
+        switch (*it) {
+        case 'B':
+            capitalize = true;
+            [[fallthrough]];
+        case 'b':
+            base = BigInt::Base::Binary;
+            break;
+        case 'o':
+            base = BigInt::Base::Octal;
+            break;
+        case 'd':
+            base = BigInt::Base::Decimal;
+            break;
+        case 'X':
+            capitalize = true;
+            [[fallthrough]];
+        case 'x':
+            base = BigInt::Base::Hexadecimal;
+            break;
+        default:
+            if consteval {
+                return it;
+            }
+            throw std::format_error("Invalid format specifier");
+        }
+
+        std::advance(it, 1);
+        return it;
+    }
+
+    auto format(BigInt const &num, std::format_context &ctx) const
+    {
+        return std::format_to(ctx.out(), "{}", num.format_to_base(base, add_prefix, capitalize));
     }
 };
 

@@ -1,5 +1,3 @@
-#include "bigint.hpp"
-
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -7,12 +5,19 @@
 #include <stdexcept>
 #include <utility>
 
+#include "bigint.hpp"
+
 using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
 
 // Character representation of all digits
 static constexpr std::array<char, 16> digits = {
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+};
+
+// Character representation of all digits in lowercase.
+static constexpr std::array<char, 16> digits_lowercase = {
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 };
 
 static constexpr auto is_power_of_two(std::integral auto num) -> bool
@@ -209,39 +214,69 @@ void BigInt::base_to_binary(std::string_view num, Base base)
     }
 }
 
-auto BigInt::to_power_of_two_base(Base base) const -> std::string
+auto BigInt::format_to_power_of_two_base(Base base, bool add_prefix, bool capitalize) const -> std::string
 {
     // Amount of bits that fit in a single digit of the specified base.
     auto const digit_bits = static_cast<ChunkType>(std::countr_zero(std::to_underlying(base)));
+    size_t bit_count = this->bit_count();
     std::string result;
-    size_t bit_count = chunks.size() * chunk_bits;
+    result.reserve((bit_count / digit_bits) + 1 + (add_prefix ? 2 : 0));
 
     // Iterate through chunks of digit_bits bits and convert them to the specified base.
-    for (size_t i = 0;; i += digit_bits) {
+    size_t i = 0;
+    while (i < bit_count) {
         // Number of bits to extract from the current chunk.
-        size_t const bits_to_extract = std::min(digit_bits, bit_count - i);
+        size_t const extracted_bits = std::min(digit_bits, bit_count - i);
 
         ChunkType digit = 0;
-        for (size_t j = 0; j < bits_to_extract; ++j) {
+        for (size_t j = 0; j < extracted_bits; ++j) {
             digit |= static_cast<ChunkType>(get_bit_at(i + j)) << j;
         }
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-        result += digits[digit];
+        result += capitalize ? digits[digit] : digits_lowercase[digit];
+
+        i += extracted_bits;
     }
 
     std::ranges::reverse(result);
-    return result.empty() ? "0" : result;
+
+    if (result.empty()) {
+        result = "0";
+    }
+
+    std::string prefix;
+
+    if (add_prefix) {
+        switch (base) {
+        case Base::Binary:
+            prefix = capitalize ? "0B" : "0b";
+            break;
+        case Base::Octal:
+            prefix = "0";
+            break;
+        case Base::Hexadecimal:
+            prefix = capitalize ? "0X" : "0x";
+            break;
+        case Base::Decimal:
+            assert(false);  // Should never happen.
+        }
+    }
+
+    result.insert(0, prefix);
+    return result;
 }
 
-auto BigInt::to_decimal() const -> std::string
+auto BigInt::format_to_decimal() const -> std::string
 {
-    // Keep dividing modulo 10 and store the remainder in a string.
     BigInt quotient{*this};
     BigInt remainder;
     static auto const ten = 10_bi;
+    static auto const log2_10 = std::log2(10);
     std::string result;
+    result.reserve(static_cast<size_t>(std::ceil(static_cast<long double>(quotient.bit_count()) / log2_10) + 1));
 
+    // Keep dividing modulo 10 and store the remainder in a string.
     while (!quotient.is_zero()) {
         std::tie(quotient, remainder) = div(quotient, ten);
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -252,17 +287,17 @@ auto BigInt::to_decimal() const -> std::string
     return result.empty() ? "0" : result;
 }
 
-auto BigInt::to_base(Base base) const -> std::string
+auto BigInt::format_to_base(Base base, bool add_prefix, bool capitalize) const -> std::string
 {
     if (is_zero()) {
         return "0";
     }
     if (negative) {
-        return "-" + (-(*this)).to_base(base);
+        return "-" + (-(*this)).format_to_base(base, add_prefix, capitalize);
     }
     if (is_power_of_two(std::to_underlying(base))) {
-        return to_power_of_two_base(base);
+        return format_to_power_of_two_base(base, add_prefix, capitalize);
     }
     assert(base == Base::Decimal);
-    return to_decimal();
+    return format_to_decimal();
 }
