@@ -153,67 +153,6 @@ auto BigInt::operator%(BigInt const &rhs) const -> BigInt
     return div(*this, rhs).second;
 }
 
-auto BigInt::operator&(BigInt const &rhs) const noexcept -> BigInt
-{
-    BigInt const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
-    BigInt const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
-    BigInt result{larger};
-
-    for (size_t i = 0; i < larger.chunks.size(); ++i) {
-        if (i < smaller.chunks.size()) {
-            result.chunks[i] = larger.chunks[i] & smaller.chunks[i];
-        } else {
-            result.chunks[i] = 0;
-        }
-    }
-
-    result.remove_leading_zeroes();
-    return result;
-}
-
-auto BigInt::operator|(BigInt const &rhs) const noexcept -> BigInt
-{
-    BigInt const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
-    BigInt const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
-    BigInt result{larger};
-
-    for (size_t i = 0; i < larger.chunks.size(); ++i) {
-        if (i < smaller.chunks.size()) {
-            result.chunks[i] = larger.chunks[i] | smaller.chunks[i];
-        }
-    }
-
-    return result;
-}
-
-auto BigInt::operator^(BigInt const &rhs) const noexcept -> BigInt
-{
-    BigInt const &larger = chunks.size() > rhs.chunks.size() ? *this : rhs;
-    BigInt const &smaller = chunks.size() > rhs.chunks.size() ? rhs : *this;
-    BigInt result{larger};
-
-    for (size_t i = 0; i < larger.chunks.size(); ++i) {
-        if (i < smaller.chunks.size()) {
-            result.chunks[i] = larger.chunks[i] ^ smaller.chunks[i];
-        }
-    }
-
-    result.remove_leading_zeroes();
-    return result;
-}
-
-auto BigInt::operator~() const noexcept -> BigInt
-{
-    BigInt result{*this};
-
-    for (auto &chunk : result.chunks) {
-        chunk = ~chunk;
-    }
-
-    result.remove_leading_zeroes();
-    return result;
-}
-
 auto BigInt::operator<<(size_t rhs) const noexcept -> BigInt
 {
     if (is_zero() || rhs == 0) {
@@ -301,24 +240,6 @@ auto BigInt::operator/=(BigInt const &rhs) noexcept -> BigInt &
 auto BigInt::operator%=(BigInt const &rhs) noexcept -> BigInt &
 {
     *this = *this % rhs;
-    return *this;
-}
-
-auto BigInt::operator&=(BigInt const &rhs) noexcept -> BigInt &
-{
-    *this = *this & rhs;
-    return *this;
-}
-
-auto BigInt::operator|=(BigInt const &rhs) noexcept -> BigInt &
-{
-    *this = *this | rhs;
-    return *this;
-}
-
-auto BigInt::operator^=(BigInt const &rhs) noexcept -> BigInt &
-{
-    *this = *this ^ rhs;
     return *this;
 }
 
@@ -467,7 +388,7 @@ auto BigInt::is_negative() const -> bool
     return static_cast<bool>(chunks.back() >> (chunk_bits - 1));
 }
 
-/// Remove leading zeroes from the number.
+/// Remove leading zero chunks from the number.
 void BigInt::remove_leading_zeroes()
 {
     while (chunks.size() > 1 && chunks.back() == 0) {

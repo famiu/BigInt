@@ -49,11 +49,6 @@ public:
     auto operator/(BigInt const &rhs) const -> BigInt;
     auto operator%(BigInt const &rhs) const -> BigInt;
 
-    auto operator&(BigInt const &rhs) const noexcept -> BigInt;
-    auto operator|(BigInt const &rhs) const noexcept -> BigInt;
-    auto operator^(BigInt const &rhs) const noexcept -> BigInt;
-    auto operator~() const noexcept -> BigInt;
-
     auto operator<<(size_t rhs) const noexcept -> BigInt;
     auto operator>>(size_t rhs) const noexcept -> BigInt;
 
@@ -62,10 +57,6 @@ public:
     auto operator*=(BigInt const &rhs) noexcept -> BigInt &;
     auto operator/=(BigInt const &rhs) noexcept -> BigInt &;
     auto operator%=(BigInt const &rhs) noexcept -> BigInt &;
-
-    auto operator&=(BigInt const &rhs) noexcept -> BigInt &;
-    auto operator|=(BigInt const &rhs) noexcept -> BigInt &;
-    auto operator^=(BigInt const &rhs) noexcept -> BigInt &;
 
     auto operator<<=(size_t rhs) noexcept -> BigInt &;
     auto operator>>=(size_t rhs) noexcept -> BigInt &;
