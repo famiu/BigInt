@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <stdexcept>
 
 #include "bigint.hpp"
 
@@ -308,7 +309,7 @@ TEST_CASE("BigInt Division and Modulo")
 
         SECTION("Division by zero")
         {
-            REQUIRE_THROWS_AS(a / 0_bi, std::invalid_argument);
+            REQUIRE_THROWS_AS(a / 0_bi, std::domain_error);
         }
     }
 
@@ -322,7 +323,7 @@ TEST_CASE("BigInt Division and Modulo")
 
         SECTION("Division by zero")
         {
-            REQUIRE_THROWS_AS(a % 0_bi, std::invalid_argument);
+            REQUIRE_THROWS_AS(a % 0_bi, std::domain_error);
         }
     }
 }

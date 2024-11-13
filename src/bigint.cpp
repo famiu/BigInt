@@ -347,7 +347,7 @@ auto operator""_bi(char const *num) -> BigInt
 auto BigInt::div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>
 {
     if (denom.is_zero()) {
-        throw std::invalid_argument("Division by zero");
+        throw std::domain_error("Division by zero");
     }
 
     if (num.is_zero()) {
