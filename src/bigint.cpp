@@ -482,18 +482,18 @@ auto BigInt::add_magnitude(BigInt const &rhs) const noexcept -> BigInt
     ChunkType carry = 0;
 
     for (size_t i = 0; i < rhs.chunks.size(); ++i) {
-        // Check if the current chunk can be added without overflow.
+        // Check if the current chunk can be added to without overflow.
         if (result.chunks[i] < chunk_max - rhs.chunks[i] - carry) {
             result.chunks[i] += rhs.chunks[i] + carry;
             carry = 0;
         } else {
-            // Add with overflow.
+            // Add with overflow and carry to next chunk.
             result.chunks[i] += rhs.chunks[i] + carry;
             carry = 1;
         }
     }
 
-    // Add carry to the rest of the *this number.
+    // Add carry to the rest of the number.
     if (carry != 0) {
         for (size_t i = rhs.chunks.size(); i < result.chunks.size(); ++i) {
             if (result.chunks[i] == chunk_max) {
@@ -522,18 +522,18 @@ auto BigInt::subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt
     ChunkType borrow = 0;
 
     for (size_t i = 0; i < rhs.chunks.size(); ++i) {
-        // Check if the current chunk can be subtracted without underflow.
+        // Check if the current chunk can be subtracted from without underflow.
         if (result.chunks[i] >= rhs.chunks[i] + borrow) {
             result.chunks[i] -= rhs.chunks[i] + borrow;
             borrow = 0;
         } else {
-            // Subtract with underflow.
+            // Subtract with underflow and borrow from next chunk.
             result.chunks[i] -= rhs.chunks[i] + borrow;
             borrow = 1;
         }
     }
 
-    // Subtract borrow from the rest of the *this number.
+    // Subtract borrow from the rest of the number.
     if (borrow != 0) {
         for (size_t i = rhs.chunks.size(); i < result.chunks.size(); ++i) {
             if (result.chunks[i] == 0) {
@@ -546,7 +546,7 @@ auto BigInt::subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt
         }
     }
 
-    // Borrow cannot be 1 at the end of the number.
+    // Borrow cannot be 1 at the end of the number since rhs is smaller or equal.
     assert(borrow == 0);
 
     // Remove leading zeroes.
