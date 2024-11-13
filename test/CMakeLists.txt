@@ -9,7 +9,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 
-add_executable(tests test.cpp)
+add_executable(tests bigint.cpp utils.cpp)
 # Disable -Werror for tests
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(tests PRIVATE -Wno-error)
