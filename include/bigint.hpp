@@ -189,5 +189,14 @@ private:
 
 auto operator""_bi(char const *) -> BigInt;
 
+template<>
+struct std::formatter<BigInt> : std::formatter<std::string>
+{
+    static auto format(BigInt const &num, std::format_context &ctx)
+    {
+        return std::format_to(ctx.out(), "{}", static_cast<std::string>(num));
+    }
+};
+
 static_assert(std::is_unsigned_v<BigInt::ChunkType>, "ChunkType must be an unsigned integral type");
 static_assert(std::is_same_v<BigInt::DataType::value_type, BigInt::ChunkType>, "DataType must store ChunkType");
