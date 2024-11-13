@@ -343,13 +343,15 @@ struct std::formatter<BigInt> : std::formatter<std::string>
             base = BigInt::Base::Hexadecimal;
             break;
         default:
-            if consteval {
-                return it;
-            }
             throw std::format_error("Invalid format specifier");
         }
 
         std::advance(it, 1);
+
+        if (it != ctx.end() && *it != '}') {
+            throw std::format_error("Invalid format specifier");
+        }
+
         return it;
     }
 
