@@ -7,11 +7,11 @@
 
 TEST_CASE("BigInt default constructor")
 {
-    BigInt c;
-    REQUIRE(c == 0);
-    REQUIRE(-c == 0);
-    REQUIRE(c == 0_bi);
-    REQUIRE(-c == 0_bi);
+    BigInt const a;
+    REQUIRE(a == 0);
+    REQUIRE(-a == 0);
+    REQUIRE(a == 0_bi);
+    REQUIRE(-a == 0_bi);
 }
 
 TEST_CASE("BigInt integral constructor")
@@ -144,6 +144,42 @@ TEST_CASE("BigInt Unary operators")
     REQUIRE(-a == -1234567890_bi);
     REQUIRE(+b == 987654321_bi);
     REQUIRE(-b == -987654321_bi);
+}
+
+TEST_CASE("BigInt Comparison")
+{
+    REQUIRE(a <=> b == std::strong_ordering::greater);
+    REQUIRE(a <=> a == std::strong_ordering::equal);
+    REQUIRE(b <=> a == std::strong_ordering::less);
+    REQUIRE(a == 1234567890);
+    REQUIRE(a == 1234567890_bi);
+    REQUIRE(1234567890 == a);
+    REQUIRE(1234567890_bi == a);
+    REQUIRE(a != b);
+    REQUIRE(a != 987654321);
+    REQUIRE(a != 987654321_bi);
+    REQUIRE(987654321 != a);
+    REQUIRE(987654321_bi != a);
+    REQUIRE(a > b);
+    REQUIRE(a >= b);
+    REQUIRE(b < a);
+    REQUIRE(b <= a);
+    REQUIRE(-a <=> -b == std::strong_ordering::less);
+    REQUIRE(-a <=> -a == std::strong_ordering::equal);
+    REQUIRE(-b <=> -a == std::strong_ordering::greater);
+    REQUIRE(-a == -1234567890);
+    REQUIRE(-a == -1234567890_bi);
+    REQUIRE(-1234567890 == -a);
+    REQUIRE(-1234567890_bi == -a);
+    REQUIRE(-a != -b);
+    REQUIRE(-a != -987654321);
+    REQUIRE(-a != -987654321_bi);
+    REQUIRE(-987654321 != -a);
+    REQUIRE(-987654321_bi != -a);
+    REQUIRE(-a < -b);
+    REQUIRE(-a <= -b);
+    REQUIRE(-b > -a);
+    REQUIRE(-b >= -a);
 }
 
 TEST_CASE("BigInt Addition")
