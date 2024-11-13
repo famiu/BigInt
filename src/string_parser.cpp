@@ -55,12 +55,6 @@ auto BigInt::char_to_digit(Base base, char c) -> ChunkType
     }
 }
 
-/// Long divide string representation of a number by a divisor.
-///
-/// @param num The number to divide, must be unsigned.
-/// @param[out] quotient Resulting quotient.
-/// @param base The base of the number.
-/// @param divisor The divisor.
 auto BigInt::long_divide(std::string_view num, std::string &quotient, Base base, ChunkType divisor) -> ChunkType
 {
     // Clear quotient string and reserve space.
@@ -92,10 +86,6 @@ auto BigInt::long_divide(std::string_view num, std::string &quotient, Base base,
     return dividend;  // Return the remainder (which is the dividend now).
 }
 
-/// Convert string with power of two base to binary and store it in chunks.
-///
-/// @param num The number to convert, must be unsigned.
-/// @param base The base of the number.
 void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
 {
     // Numeric value of base. Used for base conversion.
@@ -147,9 +137,6 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
     }
 }
 
-/// Convert decimal base to binary and store it in chunks.
-///
-/// @param num The number to convert, must be unsigned.
 void BigInt::decimal_base_to_binary(std::string_view num)
 {
     // Clear the chunks vector.
@@ -199,13 +186,8 @@ void BigInt::decimal_base_to_binary(std::string_view num)
     }
 }
 
-/// Convert a base to binary and store it in chunks.
-///
-/// @param num The number to convert, must be unsigned.
-/// @param base The base of the number.
 void BigInt::base_to_binary(std::string_view num, Base base)
 {
-    // Check if base is a power of 2.
     if (is_power_of_two(std::to_underlying(base))) {
         power_of_two_base_to_binary(num, base);
     } else {
@@ -214,12 +196,13 @@ void BigInt::base_to_binary(std::string_view num, Base base)
     }
 }
 
-auto BigInt::format_to_power_of_two_base(Base base, bool add_prefix, bool capitalize) const -> std::string
+auto BigInt::format_to_power_of_two_base(Base base, bool add_prefix, bool capitalize) const noexcept -> std::string
 {
     // Amount of bits that fit in a single digit of the specified base.
     auto const digit_bits = static_cast<ChunkType>(std::countr_zero(std::to_underlying(base)));
     size_t bit_count = this->bit_count();
     std::string result;
+    // Reserve enough space for the result.
     result.reserve((bit_count / digit_bits) + 1 + (add_prefix ? 2 : 0));
 
     // Iterate through chunks of digit_bits bits and convert them to the specified base.
@@ -239,6 +222,7 @@ auto BigInt::format_to_power_of_two_base(Base base, bool add_prefix, bool capita
         i += extracted_bits;
     }
 
+    // Reverse the result string to make it MSB first.
     std::ranges::reverse(result);
 
     if (result.empty()) {
@@ -274,11 +258,13 @@ auto BigInt::format_to_decimal() const -> std::string
     static auto const ten = 10_bi;
     static auto const log2_10 = std::log2(10);
     std::string result;
+    // Reserve enough space for the result.
     result.reserve(static_cast<size_t>(std::ceil(static_cast<long double>(quotient.bit_count()) / log2_10) + 1));
 
     // Keep dividing modulo 10 and store the remainder in a string.
     while (!quotient.is_zero()) {
         std::tie(quotient, remainder) = div(quotient, ten);
+        // Append the remainder to the result string.
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
         result += digits[remainder.chunks[0]];
     }

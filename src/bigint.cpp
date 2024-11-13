@@ -137,7 +137,6 @@ auto BigInt::operator*(BigInt const &rhs) const noexcept -> BigInt
         }
     }
 
-    // Determine the sign of the result.
     result.negative = negative != rhs.negative;
 
     return result;
@@ -160,20 +159,27 @@ auto BigInt::operator<<(size_t rhs) const noexcept -> BigInt
     }
 
     BigInt result{*this};
+    // Number of whole chunks to shift.
     size_t chunk_shift = rhs / chunk_bits;
+    // Number of bits to shift within a chunk.
     size_t bit_shift = rhs % chunk_bits;
 
+    // Add whole chunks of zeroes to the beginning of the number.
     result.chunks.insert(result.chunks.begin(), chunk_shift, 0);
 
+    // Shift the bits within the remaining chunks.
     if (bit_shift != 0) {
         ChunkType carry = 0;
 
         for (size_t i = chunk_shift; i < result.chunks.size(); ++i) {
+            // Get the bits that will be shifted out of the current chunk and store them in carry.
+            // Append the carry from the previous chunk to the current chunk.
             ChunkType new_carry = result.chunks[i] >> (chunk_bits - bit_shift);
             result.chunks[i] = (result.chunks[i] << bit_shift) | carry;
             carry = new_carry;
         }
 
+        // If there is a carry left, add it to the end of the number.
         if (carry != 0) {
             result.chunks.push_back(carry);
         }
@@ -189,24 +195,32 @@ auto BigInt::operator>>(size_t rhs) const noexcept -> BigInt
     }
 
     BigInt result{*this};
+    // Number of whole chunks to shift.
     size_t chunk_shift = rhs / chunk_bits;
+    // Number of bits to shift within a chunk.
     size_t bit_shift = rhs % chunk_bits;
 
+    // Shift is larger than the number of bits in the number, return 0.
     if (chunk_shift >= result.chunks.size()) {
         return BigInt{};
     }
 
+    // Erase the whole chunks that will be shifted.
     result.chunks.erase(result.chunks.begin(), std::next(result.chunks.begin(), to_signed(chunk_shift)));
 
+    // Shift the bits within the remaining chunks.
     if (bit_shift != 0) {
         ChunkType carry = 0;
 
         for (size_t i = result.chunks.size(); i-- > 0;) {
+            // Get the bits that will be shifted out of the current chunk and store them in carry.
+            // Append the carry from the previous chunk to the current chunk.
             ChunkType new_carry = result.chunks[i] << (chunk_bits - bit_shift);
             result.chunks[i] = (result.chunks[i] >> bit_shift) | carry;
             carry = new_carry;
         }
 
+        // Clear out any leading zero chunks that may have been created.
         result.remove_leading_zeroes();
     }
 
@@ -338,22 +352,32 @@ auto BigInt::div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, Bi
     BigInt quotient{};
     BigInt remainder{num.abs()};
 
+    // Perform long division:
+    // 1. Find the largest multiple of the denominator that fits in the current remainder.
+    // 2. Subtract the multiple from the remainder.
+    // 3. Repeat until the remainder is less than the denominator.
     while (remainder.compare_magnitude(denom) != std::strong_ordering::less) {
         BigInt temp{denom.abs()};
+        // Approximate the amount of shifts needed to align the most significant bit of the denominator with the
+        // most significant bit of the remainder.
         size_t shift = remainder.bit_count() - temp.bit_count();
 
+        // Align the most significant bit of the denominator with the most significant bit of the remainder.
         temp <<= shift;
 
-        while (temp.compare_magnitude(remainder) == std::strong_ordering::greater) {
+        // If the denominator is still greater than the remainder, shift it to the right once.
+        // This will guarantee that the denominator is less than the remainder.
+        if (temp.compare_magnitude(remainder) == std::strong_ordering::greater) {
             temp >>= 1;
             --shift;
         }
 
+        // Subtract the multiple from the remainder, and add the multiplier to the quotient.
         remainder -= temp;
         quotient += one << shift;
     }
 
-    // For remainder, the sign is the same as the dividend.
+    // For remainder, the sign is always the same as the dividend.
     remainder.negative = num.negative;
     quotient.negative = num.negative != denom.negative;
 
@@ -365,10 +389,6 @@ auto BigInt::bit_count() const -> size_t
     return (chunks.size() * chunk_bits) - static_cast<size_t>(std::countl_zero(chunks.back()));
 }
 
-/// Get the bit at the specified index.
-///
-/// @param index The index of the bit to get. 0th bit is the least significant bit and the last bit is the most
-///              significant bit.
 auto BigInt::get_bit_at(size_t index) const -> bool
 {
     size_t const chunk_index = index / chunk_bits;
@@ -383,12 +403,6 @@ auto BigInt::is_zero() const -> bool
     return chunks.size() == 1 && chunks[0] == 0;
 }
 
-auto BigInt::is_negative() const -> bool
-{
-    return static_cast<bool>(chunks.back() >> (chunk_bits - 1));
-}
-
-/// Remove leading zero chunks from the number.
 void BigInt::remove_leading_zeroes()
 {
     while (chunks.size() > 1 && chunks.back() == 0) {
@@ -411,10 +425,6 @@ auto BigInt::compare_magnitude(BigInt const &rhs) const noexcept -> std::strong_
     return std::strong_ordering::equal;
 }
 
-/// Add the magnitude of lhs and rhs.
-///
-/// @param rhs The number to add, must be smaller than or equal to lhs.
-/// @return The result of the addition.
 auto BigInt::add_magnitude(BigInt const &rhs) const noexcept -> BigInt
 {
     assert(compare_magnitude(rhs) != std::strong_ordering::less);
@@ -423,6 +433,7 @@ auto BigInt::add_magnitude(BigInt const &rhs) const noexcept -> BigInt
     ChunkType carry = 0;
 
     for (size_t i = 0; i < rhs.chunks.size(); ++i) {
+        // Check if the current chunk can be added without overflow.
         if (result.chunks[i] < chunk_max - rhs.chunks[i] - carry) {
             result.chunks[i] += rhs.chunks[i] + carry;
             carry = 0;
@@ -454,10 +465,6 @@ auto BigInt::add_magnitude(BigInt const &rhs) const noexcept -> BigInt
     return result;
 }
 
-/// Subtract the magnitude of rhs from lhs.
-///
-/// @param rhs The number to subtract, must be smaller than or equal to lhs.
-/// @return The result of the subtraction.
 auto BigInt::subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt
 {
     assert(compare_magnitude(rhs) != std::strong_ordering::less);
@@ -466,6 +473,7 @@ auto BigInt::subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt
     ChunkType borrow = 0;
 
     for (size_t i = 0; i < rhs.chunks.size(); ++i) {
+        // Check if the current chunk can be subtracted without underflow.
         if (result.chunks[i] >= rhs.chunks[i] + borrow) {
             result.chunks[i] -= rhs.chunks[i] + borrow;
             borrow = 0;

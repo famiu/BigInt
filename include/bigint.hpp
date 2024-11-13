@@ -113,39 +113,56 @@ public:
 
     explicit operator std::string() const;
 
+    /// @brief Get the absolute value of the number.
     [[nodiscard]] auto abs() const noexcept -> BigInt;
 
-    auto convert(std::string const &output) noexcept -> bool
+    /// @brief Convert the number to the specified type.
+    ///
+    /// @param[out] output Result of the conversion.
+    /// @return Whether the conversion was successful.
+    auto convert(std::string &output) const noexcept -> bool
     {
         try {
-            *this = BigInt{output};
+            output = static_cast<std::string>(*this);
             return true;
         } catch (std::invalid_argument const &) {
             return false;
         }
     }
 
-    auto convert(std::integral auto const &output) noexcept -> bool
+    /// @brief Convert the number to the specified type.
+    ///
+    /// @tparam T The type to convert the number to.
+    /// @param[out] output Result of the conversion.
+    /// @return Whether the conversion was successful.
+    auto convert(std::integral auto &output) const noexcept -> bool
     {
         try {
-            *this = BigInt{output};
+            output = static_cast<decltype(output)>(*this);
             return true;
         } catch (std::overflow_error const &) {
             return false;
         }
     }
 
+    /// @brief Divide two numbers and return the quotient and remainder.
+    ///
+    /// @param num The dividend.
+    /// @param denom The divisor.
+    ///
+    /// @return The quotient and remainder.
     static auto div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, BigInt>;
 
     friend std::formatter<BigInt>;
     friend auto operator""_bi(char const *) -> BigInt;
 
 private:
-    /// Sign of the number.
+    /// @brief Sign of the number.
     bool negative{false};
     /// @brief Chunks of the number. Stored in little endian.
     DataType chunks;
 
+    /// @brief Supported bases.
     enum class Base : std::uint_fast8_t
     {
         Binary = 2,
@@ -154,31 +171,124 @@ private:
         Hexadecimal = 16
     };
 
+    /// @brief Number of bits in a chunk.
     constexpr static auto chunk_bits = sizeof(ChunkType) * 8;
+    /// @brief Maximum value a chunk can store.
     constexpr static ChunkType chunk_max = std::numeric_limits<ChunkType>::max();
 
+    /// @brief Get the number of bits in the number.
     [[nodiscard]] auto bit_count() const -> size_t;
+
+    /// @brief Get the bit at the specified index.
+    ///
+    /// @param index The index of the bit to get. 0th bit is the least significant bit and the last bit is the most
+    ///              significant bit.
     [[nodiscard]] auto get_bit_at(size_t index) const -> bool;
 
+    /// @brief Check if the number is zero.
     [[nodiscard]] auto is_zero() const -> bool;
-    [[nodiscard]] auto is_negative() const -> bool;
+    /// @brief Remove leading zero chunks from the number.
     void remove_leading_zeroes();
 
+    /// @brief Compare the magnitude of two numbers. Does not evaluate the sign.
+    ///
+    /// @param rhs The number to compare to.
+    /// @return Ordering of the magnitude of the two numbers.
     [[nodiscard]] auto compare_magnitude(BigInt const &rhs) const noexcept -> std::strong_ordering;
 
+    /// @brief Add the magnitude of lhs and rhs.
+    ///
+    /// @param rhs The number to add, must be smaller than or equal to lhs.
+    /// @return The result of the addition.
     [[nodiscard]] auto add_magnitude(BigInt const &rhs) const noexcept -> BigInt;
+
+    /// @brief Subtract the magnitude of rhs from lhs.
+    ///
+    /// @param rhs The number to subtract, must be smaller than or equal to lhs.
+    /// @return The result of the subtraction.
     [[nodiscard]] auto subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt;
 
-    static auto is_valid_digit(Base base, char c) -> bool;
-    static auto char_to_digit(Base base, char c) -> ChunkType;
+    /// @brief Check if character is a valid digit in the given base.
+    ///
+    /// @param base The base to check the digit in.
+    /// @param c The character to check.
+    /// @return True if the character is a valid digit in the given base, false otherwise.
+    ///
+    /// @note Only works for bases 2, 8, 10, and 16.
+    [[nodiscard]] static auto is_valid_digit(Base base, char c) -> bool;
+
+    /// @brief Convert character to digit in the given base. The character must be a valid digit in the given base.
+    ///
+    /// @param base The base to convert the character to.
+    /// @param c The character to convert.
+    /// @return The digit represented by the character.
+    ///
+    /// @throws std::invalid_argument if the character is not a valid digit in the given base.
+    /// @note Only works for bases 2, 8, 10, and 16.
+    [[nodiscard]] static auto char_to_digit(Base base, char c) -> ChunkType;
+
+    /// @brief Long divide string representation of a number by a divisor.
+    ///
+    /// @param num The number to divide, must be unsigned.
+    /// @param[out] quotient Resulting quotient.
+    /// @param base The base of the number.
+    /// @param divisor The divisor.
+    /// @return The remainder.
+    ///
+    /// @throws std::invalid_argument if num contains invalid digits for the given base.
+    /// @note Only works for bases 2, 8, 10, and 16.
     static auto long_divide(std::string_view num, std::string &quotient, Base base, ChunkType divisor) -> ChunkType;
+
+    /// @brief Convert string with power of two base to binary and store it in chunks.
+    ///
+    /// @param num The number to convert, must be unsigned.
+    /// @param base The base of the number.
+    ///
+    /// @throws std::invalid_argument if num contains invalid digits for the given base.
+    /// @note Only works for bases 2, 8, and 16.
     void power_of_two_base_to_binary(std::string_view num, Base base);
+
+    /// @brief Convert decimal base to binary and store it in chunks.
+    ///
+    /// @param num The number to convert, must be unsigned.
+    ///
+    /// @throws std::invalid_argument if num contains invalid digits for the given base.
     void decimal_base_to_binary(std::string_view num);
+
+    /// @brief Convert a base to binary and store it in chunks.
+    ///
+    /// @param num The number to convert, must be unsigned.
+    /// @param base The base of the number.
+    ///
+    /// @throws std::invalid_argument if num contains invalid digits for the given base.
+    /// @note Only works for bases 2, 8, 10, and 16.
     void base_to_binary(std::string_view num, Base base);
 
-    [[nodiscard]] auto format_to_power_of_two_base(Base base, bool add_prefix = false, bool capitalize = false) const
+    /// @brief Format the number to a power of two base.
+    ///
+    /// @param base The base to format the number to.
+    /// @param add_prefix Whether to add a base prefix to the formatted number (e.g. 0b for binary).
+    /// @param capitalize Whether to capitalize the base prefix (if any) and the digits (for hexadecimal).
+    /// @return The formatted number.
+    ///
+    /// @note Only works for bases 2, 8, and 16.
+    [[nodiscard]] auto
+    format_to_power_of_two_base(Base base, bool add_prefix = false, bool capitalize = false) const noexcept
       -> std::string;
+
+    /// @brief Format the number to decimal.
+    ///
+    /// @return The formatted number.
     [[nodiscard]] auto format_to_decimal() const -> std::string;
+
+    /// @brief Format the number to the specified base.
+    ///
+    /// @param base The base to format the number to.
+    /// @param add_prefix Whether to add a base prefix to the formatted number (e.g. 0b for binary).
+    /// @param capitalize Whether to capitalize the base prefix (if any) and the digits (for hexadecimal).
+    /// @return The formatted number.
+    ///
+    /// @note Only works for bases 2, 8, 10, and 16.
     [[nodiscard]] auto format_to_base(Base base, bool add_prefix = false, bool capitalize = false) const -> std::string;
 };
 
