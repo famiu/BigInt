@@ -11,6 +11,8 @@
 
 #include "utils.hpp"
 
+namespace BI
+{
 class BigInt
 {
 public:
@@ -23,7 +25,7 @@ public:
 
     explicit BigInt(std::integral auto const &num) : negative{num < 0}
     {
-        auto const num_unsigned = to_unsigned(negative ? -num : num);
+        auto const num_unsigned = detail::to_unsigned(negative ? -num : num);
         auto const num_size = sizeof(num_unsigned) * 8;
 
         for (size_t i = 0; i < num_size; i += chunk_bits) {
@@ -93,12 +95,12 @@ public:
 
         // Unsigned types cannot store negative numbers.
         if (negative && !is_signed) {
-            throw std::underflow_error(std::format("Number can't fit in unsigned type '{}'", type_name<T>()));
+            throw std::underflow_error(std::format("Number can't fit in unsigned type '{}'", detail::type_name<T>()));
         }
         // Signed types can store 1 less bit than their signed counterpart.
         if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed)) {
             throw std::overflow_error(  // clang-format off
-                    std::format("Number is too large to be converted to type '{}'", type_name<T>())
+                    std::format("Number is too large to be converted to type '{}'", detail::type_name<T>())
             );  // clang-format on
         }
 
@@ -299,13 +301,16 @@ private:
     /// @note Only works for bases 2, 8, 10, and 16.
     [[nodiscard]] auto format_to_base(Base base, bool add_prefix = false, bool capitalize = false) const -> std::string;
 };
+}  // namespace BI
 
-auto operator<<(std::ostream &os, BigInt const &num) -> std::ostream &;
-auto operator""_bi(char const *) -> BigInt;
+auto operator<<(std::ostream &os, BI::BigInt const &num) -> std::ostream &;
+auto operator""_bi(char const *) -> BI::BigInt;
 
 template<>
-struct std::formatter<BigInt> : std::formatter<std::string>
+struct std::formatter<BI::BigInt> : std::formatter<std::string>
 {
+    using BigInt = BI::BigInt;
+
     bool add_prefix = false;
     bool capitalize = false;
     BigInt::Base base{BigInt::Base::Decimal};
@@ -361,5 +366,5 @@ struct std::formatter<BigInt> : std::formatter<std::string>
     }
 };
 
-static_assert(std::is_unsigned_v<BigInt::ChunkType>, "ChunkType must be an unsigned integral type");
-static_assert(std::is_same_v<BigInt::DataType::value_type, BigInt::ChunkType>, "DataType must store ChunkType");
+static_assert(std::is_unsigned_v<BI::BigInt::ChunkType>, "ChunkType must be an unsigned integral type");
+static_assert(std::is_same_v<BI::BigInt::DataType::value_type, BI::BigInt::ChunkType>, "DataType must store ChunkType");

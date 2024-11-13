@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <utility>
 
+namespace BI::detail
+{
 template<typename T>
 static constexpr auto to_unsigned(T const &num) -> std::make_unsigned_t<T>
 {
@@ -83,3 +85,4 @@ constexpr auto type_name() -> std::string_view
     constexpr auto &value = type_name_holder<T>::value;
     return std::string_view(value.data(), value.size());
 }
+}  // namespace BI::detail

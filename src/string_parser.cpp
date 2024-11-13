@@ -7,6 +7,9 @@
 
 #include "bigint.hpp"
 
+using namespace BI;
+using namespace BI::detail;
+
 using ChunkType = BigInt::ChunkType;
 using DataType = BigInt::DataType;
 

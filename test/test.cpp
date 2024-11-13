@@ -2,6 +2,9 @@
 
 #include "bigint.hpp"
 
+using namespace BI;
+using namespace BI::detail;
+
 // Disable linting for Catch2 macros.
 // NOLINTBEGIN(cppcoreguidelines-avoid-do-while,bugprone-chained-comparison)
 
