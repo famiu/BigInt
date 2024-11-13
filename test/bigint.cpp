@@ -138,6 +138,27 @@ TEST_CASE("BigInt Literals")
 BigInt const a = 1234567890_bi;
 BigInt const b = 987654321_bi;
 
+TEST_CASE("BigInt abs()")
+{
+    SECTION("Positive numbers")
+    {
+        REQUIRE((a).abs() == a);
+        REQUIRE((b).abs() == b);
+    }
+
+    SECTION("Negative numbers")
+    {
+        REQUIRE((-a).abs() == a);
+        REQUIRE((-b).abs() == b);
+    }
+
+    SECTION("Zero")
+    {
+        REQUIRE((0_bi).abs() == 0);
+        REQUIRE((-0_bi).abs() == 0);
+    }
+}
+
 TEST_CASE("BigInt to Integral conversion")
 {
     SECTION("Positive numbers")
