@@ -91,6 +91,20 @@ TEST_CASE("BigInt String constructor")
     }
 }
 
+TEST_CASE("BigInt Copy constructor")
+{
+    BigInt const a = 1234567890_bi;
+    BigInt const b = a;
+    REQUIRE(a == b);
+}
+
+TEST_CASE("BigInt Move constructor")
+{
+    BigInt a = 1234567890_bi;
+    BigInt b = std::move(a);
+    REQUIRE(b == 1234567890);
+}
+
 TEST_CASE("BigInt Literals")
 {
     SECTION("Zero")
