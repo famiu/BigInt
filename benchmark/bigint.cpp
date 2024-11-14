@@ -36,6 +36,15 @@ static void BM_BigInt_StringConstructor(benchmark::State& state)
 }
 BENCHMARK(BM_BigInt_StringConstructor);
 
+static void BM_BigInt_StringConstructorHex(benchmark::State& state)
+{
+    for (auto _ : state) {
+        BigInt c("0x5891AB89C789EAC7D9F78989FFFF67878687FFAAA2157C5351895918935789ABCDEF0123456ABCDEF90909090");
+        benchmark::DoNotOptimize(c);
+    }
+}
+BENCHMARK(BM_BigInt_StringConstructorHex);
+
 static void BM_BigInt_CopyConstructor(benchmark::State& state)
 {
     for (auto _ : state) {
@@ -65,6 +74,15 @@ static void BM_BigInt_Literal(benchmark::State& state)
     }
 }
 BENCHMARK(BM_BigInt_Literal);
+
+static void BM_BigInt_LiteralHex(benchmark::State& state)
+{
+    for (auto _ : state) {
+        BigInt c = 0x5891AB89C789EAC7D9F78989FFFF67878687FFAAA2157C5351895918935789ABCDEF0123456ABCDEF90909090_bi;
+        benchmark::DoNotOptimize(c);
+    }
+}
+BENCHMARK(BM_BigInt_LiteralHex);
 
 static void BM_BigInt_abs(benchmark::State& state)
 {
@@ -193,5 +211,23 @@ static void BM_BigInt_Power(benchmark::State& state)
     }
 }
 BENCHMARK(BM_BigInt_Power);
+
+static void BM_BigInt_Format(benchmark::State& state)
+{
+    for (auto _ : state) {
+        std::string c = std::format("{}", a);
+        benchmark::DoNotOptimize(c);
+    }
+}
+BENCHMARK(BM_BigInt_Format);
+
+static void BM_BigInt_FormatHex(benchmark::State& state)
+{
+    for (auto _ : state) {
+        std::string c = std::format("{:X}", a);
+        benchmark::DoNotOptimize(c);
+    }
+}
+BENCHMARK(BM_BigInt_FormatHex);
 
 BENCHMARK_MAIN();
