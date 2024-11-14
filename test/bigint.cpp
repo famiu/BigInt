@@ -1,12 +1,9 @@
-#include "bigint.hpp"
+#include "bigint/bigint.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 #include <stdexcept>
 
 using namespace BI;
-
-// Disable linting for Catch2 macros.
-// NOLINTBEGIN(cppcoreguidelines-avoid-do-while,bugprone-chained-comparison)
 
 TEST_CASE("BigInt default constructor")
 {
@@ -422,5 +419,3 @@ TEST_CASE("BigInt std::format")
         REQUIRE(std::format("{:d}", -1234567890_bi) == "-1234567890");
     }
 }
-
-// NOLINTEND(cppcoreguidelines-avoid-do-while,bugprone-chained-comparison)

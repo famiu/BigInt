@@ -1,5 +1,7 @@
 Include(FetchContent)
 
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "*.cpp")
+
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -8,12 +10,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-
-add_executable(tests bigint.cpp utils.cpp)
-# Disable -Werror for tests
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(tests PRIVATE -Wno-error)
-endif()
+add_executable(tests ${TEST_SOURCES})
 target_include_directories(tests PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(tests PRIVATE bigint)

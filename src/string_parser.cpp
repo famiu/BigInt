@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include "bigint.hpp"
+#include "bigint/bigint.hpp"
 
 using namespace BI;
 using namespace BI::detail;

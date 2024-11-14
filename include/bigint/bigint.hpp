@@ -168,11 +168,17 @@ public:
 private:
     /// @brief Type used for each chunk of the number.
     using ChunkType = std::uint32_t;
+    /// @brief Type with double the size of ChunkType. Used for multiplication.
+    using DoubleChunkType = std::uint64_t;
 
     /// @brief Type used to store the number.
     using DataType = std::deque<ChunkType>;
 
     static_assert(std::is_unsigned_v<ChunkType>, "ChunkType must be an unsigned integral type");
+    static_assert(std::is_unsigned_v<DoubleChunkType>, "DoubleChunkType must be an unsigned integral type");
+    static_assert(
+      sizeof(ChunkType) * 2 == sizeof(DoubleChunkType), "DoubleChunkType must be twice the size of ChunkType"
+    );
     static_assert(std::is_same_v<DataType::value_type, ChunkType>, "DataType must store ChunkType");
 
     /// @brief Sign of the number.
