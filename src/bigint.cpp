@@ -132,6 +132,9 @@ auto BigInt::operator*(BigInt const &rhs) const noexcept -> BigInt
     BigInt const &smaller = magnitude_greater ? rhs : *this;
 
     BigInt result{};
+    // Reserve enough space for the result.
+    // log(a * b) = log(a) + log(b).
+    result.chunks.reserve(larger.chunks.size() + smaller.chunks.size());
 
     // Iterate through each bit of the smaller number in reverse order.
     // Shift the result by one bit and add the larger number to the result if the bit is set.
@@ -171,6 +174,7 @@ auto BigInt::operator<<(size_t rhs) const noexcept -> BigInt
     size_t bit_shift = rhs % chunk_bits;
 
     // Add whole chunks of zeroes to the beginning of the number.
+    result.chunks.reserve(result.chunks.size() + chunk_shift + 1);
     result.chunks.insert(result.chunks.begin(), chunk_shift, 0);
 
     // Shift the bits within the remaining chunks.
@@ -357,6 +361,9 @@ auto BigInt::div(BigInt const &num, BigInt const &denom) -> std::pair<BigInt, Bi
 
     BigInt quotient{};
     BigInt remainder{num.abs()};
+    // Reserve enough space for the quotient.
+    // log(a / b) = log(a) - log(b).
+    quotient.chunks.reserve(num.chunks.size() - denom.chunks.size() + 1);
 
     // Perform long division:
     // 1. Find the largest multiple of the denominator that fits in the current remainder.
@@ -410,10 +417,13 @@ auto BigInt::pow(size_t power) const noexcept -> BigInt
     // Get amount of bits in the power excluding leading zeroes.
     auto const power_bit_count = (sizeof(size_t) * 8) - power_leading_zeroes;
 
+    BigInt result(1);
+    // Reserve enough space for the result.
+    // log(a ^ b) = b * log(a).
+    result.chunks.reserve(chunks.size() * power);
+
     // Get rid of leading zeroes so that we can iterate through the bits of the power.
     power <<= power_leading_zeroes;
-
-    BigInt result(1);
 
     // Iterate through the bits of the power, starting from the most significant bit.
     // Square the result in each iteration, and multiply it by the base if the bit is set.

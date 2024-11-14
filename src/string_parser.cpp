@@ -10,6 +10,8 @@
 using namespace BI;
 using namespace BI::detail;
 
+static auto const log2_10 = std::log2(10);
+
 // Character representation of all digits
 static constexpr std::array digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
@@ -96,8 +98,9 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
     // The number of bits needed to store a digit in the base.
     auto const bits_per_digit = static_cast<size_t>(std::countr_zero(base_num));
 
-    // Clear the chunks vector.
+    // Clear the chunks vector and reserve space.
     chunks.clear();
+    chunks.reserve((num.size() * bits_per_digit / chunk_bits) + 1);
 
     ChunkType current_chunk{};
     size_t current_chunk_bits = 0;
@@ -137,8 +140,9 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
 
 void BigInt::decimal_base_to_binary(std::string_view num)
 {
-    // Clear the chunks vector.
+    // Clear the chunks vector and reserve space.
     chunks.clear();
+    chunks.reserve(static_cast<size_t>(static_cast<long double>(num.size()) * log2_10 / chunk_bits) + 1);
 
     // Maximum number that can fit in a half-sized chunk.
     static constexpr auto const half_chunk_bits = chunk_bits / 2;
@@ -254,7 +258,6 @@ auto BigInt::format_to_decimal() const -> std::string
     BigInt quotient{*this};
     BigInt remainder;
     static auto const ten = BigInt(10);
-    static auto const log2_10 = std::log2(10);
     std::string result;
     // Reserve enough space for the result.
     result.reserve(static_cast<size_t>(std::ceil(static_cast<long double>(quotient.bit_count()) / log2_10) + 1));
