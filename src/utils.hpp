@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <limits>
 #include <source_location>
 #include <stdexcept>

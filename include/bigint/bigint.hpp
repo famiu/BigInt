@@ -94,11 +94,11 @@ public:
         if (negative && !is_signed) {
             throw std::underflow_error(std::format("Number can't fit in unsigned type '{}'", detail::type_name<T>()));
         }
-        // Signed types can store 1 less bit than their signed counterpart.
+        // Signed types can store 1 less bit than their unsigned counterpart.
         if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed)) {
-            throw std::overflow_error(  // clang-format off
-                    std::format("Number is too large to be converted to type '{}'", detail::type_name<T>())
-            );  // clang-format on
+            throw std::overflow_error(
+              std::format("Number is too large to be converted to type '{}'", detail::type_name<T>())
+            );
         }
 
         UnsignedT result{};
