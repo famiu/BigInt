@@ -10,13 +10,8 @@
 using namespace BI;
 using namespace BI::detail;
 
-using ChunkType = BigInt::ChunkType;
-using DataType = BigInt::DataType;
-
 // Character representation of all digits
-static constexpr std::array digits = {
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-};
+static constexpr std::array digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
 // Character representation of all digits in lowercase.
 static constexpr std::array digits_lowercase = {
@@ -202,7 +197,7 @@ void BigInt::base_to_binary(std::string_view num, Base base)
 auto BigInt::format_to_power_of_two_base(Base base, bool add_prefix, bool capitalize) const noexcept -> std::string
 {
     // Amount of bits that fit in a single digit of the specified base.
-    auto const digit_bits = static_cast<ChunkType>(std::countr_zero(std::to_underlying(base)));
+    auto const digit_bits = static_cast<size_t>(std::countr_zero(std::to_underlying(base)));
     size_t bit_count = this->bit_count();
     std::string result;
     // Reserve enough space for the result.

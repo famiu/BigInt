@@ -7,9 +7,6 @@
 using namespace BI;
 using namespace BI::detail;
 
-using ChunkType = BigInt::ChunkType;
-using DataType = BigInt::DataType;
-
 // Avoid having to convert the number to a BigInt over and over again.
 static auto const one = BigInt(1);
 

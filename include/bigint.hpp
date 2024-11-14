@@ -16,9 +16,6 @@ namespace BI
 class BigInt
 {
 public:
-    using ChunkType = std::uint_fast32_t;
-    using DataType = std::deque<ChunkType>;
-
     BigInt();
     BigInt(BigInt const &rhs) = default;
     BigInt(BigInt &&rhs) noexcept = default;
@@ -169,6 +166,15 @@ public:
     friend auto operator""_bi(char const *) -> BigInt;
 
 private:
+    /// @brief Type used for each chunk of the number.
+    using ChunkType = std::uint32_t;
+
+    /// @brief Type used to store the number.
+    using DataType = std::deque<ChunkType>;
+
+    static_assert(std::is_unsigned_v<ChunkType>, "ChunkType must be an unsigned integral type");
+    static_assert(std::is_same_v<DataType::value_type, ChunkType>, "DataType must store ChunkType");
+
     /// @brief Sign of the number.
     bool negative{false};
     /// @brief Chunks of the number. Stored in little endian.
@@ -367,6 +373,3 @@ struct std::formatter<BI::BigInt> : std::formatter<std::string>
         return std::format_to(ctx.out(), "{}", num.format_to_base(base, add_prefix, capitalize));
     }
 };
-
-static_assert(std::is_unsigned_v<BI::BigInt::ChunkType>, "ChunkType must be an unsigned integral type");
-static_assert(std::is_same_v<BI::BigInt::DataType::value_type, BI::BigInt::ChunkType>, "DataType must store ChunkType");
