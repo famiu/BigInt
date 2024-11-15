@@ -2,7 +2,11 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdint>
 #include <utility>
+#ifdef _MSC_VER
+#   include <intrin.h>
+#endif
 
 using namespace BI;
 using namespace BI::detail;
@@ -161,16 +165,31 @@ auto BigInt::operator*(BigInt const &rhs) const noexcept -> BigInt
     // log(a * b) = log(a) + log(b).
     result.chunks.reserve(larger.chunks.size() + smaller.chunks.size());
 
-    // Iterate through each bit of the smaller number in reverse order.
-    // Shift the result by one bit and add the larger number to the result if the bit is set.
-    for (size_t i = smaller.bit_count(); i-- > 0;)
-    {
-        result <<= 1;
+    // Temporary result of multiplying the larger number by a single chunk of smaller number shifted to the left.
+    BigInt temp{};
+    temp.chunks.reserve(larger.chunks.size() + smaller.chunks.size());
 
-        if (smaller.get_bit_at(i))
+    // Use grade school multiplication to multiply the numbers.
+    // TODO(famiu): Use Karatsuba multiplication for large numbers.
+    for (size_t i = 0; i < smaller.chunks.size(); ++i)
+    {
+        temp.chunks.clear();
+
+        ChunkType carry = 0;
+        for (ChunkType chunk : larger.chunks)
         {
-            result += larger;
+            auto const [low, high] = multiply_chunks(chunk, smaller.chunks[i]);
+            temp.chunks.push_back(low + carry);
+            carry = high + static_cast<ChunkType>(low > chunk_max - carry);
         }
+
+        if (carry != 0)
+        {
+            temp.chunks.push_back(carry);
+        }
+
+        temp.chunks.insert(temp.chunks.begin(), i, 0);
+        result += temp;
     }
 
     result.negative = negative != rhs.negative;
@@ -629,4 +648,54 @@ auto BigInt::subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt
     result.remove_leading_zeroes();
 
     return result;
+}
+
+/// @details If the ChunkType is 32-bit or smaller, the result is calculated using 64-bit multiplication to prevent
+/// overflow. For ChunkType of 64-bit size, if the compiler supports 128-bit integers, the result is calculated using
+/// 128-bit multiplication. Otherwise, a custom 64-bit multiplication algorithm is used.
+auto BigInt::multiply_chunks(ChunkType const a, ChunkType const b) noexcept -> std::pair<ChunkType, ChunkType>
+{
+    if constexpr (sizeof(ChunkType) <= 4)
+    {
+        // Use 64-bit multiplication to prevent overflow.
+        auto const result = static_cast<uint64_t>(a) * b;
+        return {static_cast<ChunkType>(result), static_cast<ChunkType>(result >> (sizeof(ChunkType) * 8))};
+    }
+    else
+    {
+        // Make sure that no weird-sized chunks are used.
+        assert(sizeof(ChunkType) == 8);
+
+#if defined(_MSC_VER) && defined(_M_X64)
+        // Use MSVC intrinsics for 64-bit multiplication with overflow.
+        uint64_t high;
+        uint64_t low = _umul128(a, b, &high);
+        return {static_cast<ChunkType>(low), static_cast<ChunkType>(high)};
+#elif (defined(__GNUC__) || defined(__clang__)) && defined(__SIZEOF_INT128__)
+        // Use GCC/Clang extension for 128-bit multiplication.
+        __uint128_t result = static_cast<__uint128_t>(a) * b;
+        return {static_cast<ChunkType>(result), static_cast<ChunkType>(result >> 64)};
+#else
+        // Fall back to custom 64-bit multiplication.
+
+        // Split the chunks into two halves and multiply them.
+        constexpr auto half_chunk_mask = static_cast<ChunkType>(std::numeric_limits<uint32_t>::max());
+        uint64_t const a1 = a >> 32;
+        uint64_t const a0 = a & half_chunk_mask;
+        uint64_t const b1 = b >> 32;
+        uint64_t const b0 = b & half_chunk_mask;
+        // a1a0 * b1b0 = (a1 * b1) * 2^64 + (a1 * b0 + a0 * b1) * 2^32 + a0 * b0
+        uint64_t const p0 = a0 * b0;
+        uint64_t const p1 = a1 * b0;
+        uint64_t const p2 = a0 * b1;
+        uint64_t const p3 = a1 * b1;
+
+        // Higher 32 bits of the result (lower 32 bits are stored in p0).
+        uint64_t const result_high = (p0 >> 32) + (p1 & half_chunk_mask) + (p2 & half_chunk_mask);
+        // Overflow from the multiplication.
+        uint64_t const overflow = p3 + (p1 >> 32) + (p2 >> 32) + (result_high >> 32);
+
+        return {static_cast<ChunkType>((result_high << 32) | (p0 & half_chunk_mask)), static_cast<ChunkType>(overflow)};
+#endif
+    }
 }

@@ -103,7 +103,7 @@ public:
         if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed))
         {
             throw std::overflow_error(
-              std::format("Number is too large to be converted to type '{}'", detail::type_name<T>())
+                std::format("Number is too large to be converted to type '{}'", detail::type_name<T>())
             );
         }
 
@@ -239,6 +239,15 @@ private:
     /// @return The result of the subtraction.
     [[nodiscard]] auto subtract_magnitude(BigInt const &rhs) const noexcept -> BigInt;
 
+    /// @brief Multiply two chunks and return the result as two chunks.
+    ///
+    /// @param a The first chunk to multiply.
+    /// @param b The second chunk to multiply.
+    ///
+    /// @return The result of the multiplication as two chunks, the first chunk contains the lower 64 bits and the
+    /// second chunk contains the overflow.
+    [[nodiscard]] static auto multiply_chunks(ChunkType a, ChunkType b) noexcept -> std::pair<ChunkType, ChunkType>;
+
     /// @brief Check if character is a valid digit in the given base.
     ///
     /// @param base The base to check the digit in.
@@ -305,7 +314,7 @@ private:
     /// @note Only works for bases 2, 8, and 16.
     [[nodiscard]] auto
     format_to_power_of_two_base(Base base, bool add_prefix = false, bool capitalize = false) const noexcept
-      -> std::string;
+        -> std::string;
 
     /// @brief Format the number to decimal.
     ///
