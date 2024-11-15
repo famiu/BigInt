@@ -6,9 +6,6 @@
 
 using namespace BI::detail;
 
-// Disable linting for Catch2 macros.
-// NOLINTBEGIN(cppcoreguidelines-avoid-do-while,bugprone-chained-comparison)
-
 TEST_CASE("to_unsigned()")
 {
     SECTION("Unsigned type")
@@ -70,5 +67,3 @@ TEST_CASE("type_name()")
     REQUIRE(type_name<std::string>() == "std::basic_string<char>");
     REQUIRE(type_name<std::vector<int>>() == "std::vector<int>");
 }
-
-// NOLINTEND(cppcoreguidelines-avoid-do-while,bugprone-chained-comparison)

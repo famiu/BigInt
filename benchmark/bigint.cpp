@@ -50,7 +50,8 @@ static std::string const x_str_hex =
 
 static void BM_BigInt_DefaultConstructor(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c;
         benchmark::DoNotOptimize(c);
     }
@@ -59,7 +60,8 @@ BENCHMARK(BM_BigInt_DefaultConstructor);
 
 static void BM_BigInt_IntegralConstructor(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c(0x58911895890ULL);
         benchmark::DoNotOptimize(c);
     }
@@ -68,7 +70,8 @@ BENCHMARK(BM_BigInt_IntegralConstructor);
 
 static void BM_BigInt_StringConstructor(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c(x_str);
         benchmark::DoNotOptimize(c);
     }
@@ -77,7 +80,8 @@ BENCHMARK(BM_BigInt_StringConstructor);
 
 static void BM_BigInt_StringConstructorHex(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c(x_str_hex);
         benchmark::DoNotOptimize(c);
     }
@@ -86,7 +90,8 @@ BENCHMARK(BM_BigInt_StringConstructorHex);
 
 static void BM_BigInt_CopyConstructor(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a;
         benchmark::DoNotOptimize(c);
     }
@@ -97,7 +102,8 @@ static BigInt const temp(a);
 
 static void BM_BigInt_MoveConstructor(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = std::move(temp);
         benchmark::DoNotOptimize(c);
     }
@@ -106,7 +112,8 @@ BENCHMARK(BM_BigInt_MoveConstructor);
 
 static void BM_BigInt_abs(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a.abs();
         benchmark::DoNotOptimize(c);
     }
@@ -117,7 +124,8 @@ static BigInt const n(235789783);
 
 static void BM_BigInt_to_Integral(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         int c = static_cast<int>(n);
         benchmark::DoNotOptimize(c);
     }
@@ -126,7 +134,8 @@ BENCHMARK(BM_BigInt_to_Integral);
 
 static void BM_BigInt_to_String(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         std::string c = std::format("{}", a);
         benchmark::DoNotOptimize(c);
     }
@@ -135,7 +144,8 @@ BENCHMARK(BM_BigInt_to_String);
 
 static void BM_BigInt_to_HexString(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         std::string c = std::format("{:X}", a);
         benchmark::DoNotOptimize(c);
     }
@@ -144,7 +154,8 @@ BENCHMARK(BM_BigInt_to_HexString);
 
 static void BM_BigInt_UnaryPlus(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = +a;
         benchmark::DoNotOptimize(c);
     }
@@ -153,7 +164,8 @@ BENCHMARK(BM_BigInt_UnaryPlus);
 
 static void BM_BigInt_UnaryMinus(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = -a;
         benchmark::DoNotOptimize(c);
     }
@@ -162,7 +174,8 @@ BENCHMARK(BM_BigInt_UnaryMinus);
 
 static void BM_BigInt_Comparison(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         bool c = a < b;
         benchmark::DoNotOptimize(c);
     }
@@ -171,7 +184,8 @@ BENCHMARK(BM_BigInt_Comparison);
 
 static void BM_BigInt_Addition(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a + b;
         benchmark::DoNotOptimize(c);
     }
@@ -180,7 +194,8 @@ BENCHMARK(BM_BigInt_Addition);
 
 static void BM_BigInt_Subtraction(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a - b;
         benchmark::DoNotOptimize(c);
     }
@@ -189,7 +204,8 @@ BENCHMARK(BM_BigInt_Subtraction);
 
 static void BM_BigInt_BitsShiftLeft(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a << 512357;
         benchmark::DoNotOptimize(c);
     }
@@ -198,7 +214,8 @@ BENCHMARK(BM_BigInt_BitsShiftLeft);
 
 static void BM_BigInt_BitsShiftRight(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a >> 247;
         benchmark::DoNotOptimize(c);
     }
@@ -207,7 +224,8 @@ BENCHMARK(BM_BigInt_BitsShiftRight);
 
 static void BM_BigInt_Multiplication(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a * b;
         benchmark::DoNotOptimize(c);
     }
@@ -216,7 +234,8 @@ BENCHMARK(BM_BigInt_Multiplication);
 
 static void BM_BigInt_Division(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a / m;
         benchmark::DoNotOptimize(c);
     }
@@ -225,7 +244,8 @@ BENCHMARK(BM_BigInt_Division);
 
 static void BM_BigInt_Modulus(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = a % m;
         benchmark::DoNotOptimize(c);
     }
@@ -234,7 +254,8 @@ BENCHMARK(BM_BigInt_Modulus);
 
 static void BM_BigInt_Power(benchmark::State& state)
 {
-    for (auto _ : state) {
+    for (auto _ : state)
+    {
         BigInt c = m.pow(100);
         benchmark::DoNotOptimize(c);
     }

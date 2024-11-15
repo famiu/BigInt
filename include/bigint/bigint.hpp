@@ -25,7 +25,8 @@ public:
         auto const num_unsigned = detail::to_unsigned(negative ? -num : num);
         auto const num_size = sizeof(num_unsigned) * 8;
 
-        for (size_t i = 0; i < num_size; i += chunk_bits) {
+        for (size_t i = 0; i < num_size; i += chunk_bits)
+        {
             chunks.push_back(static_cast<ChunkType>((num_unsigned >> i) & chunk_max));
         }
 
@@ -70,9 +71,12 @@ public:
 
     auto operator<=>(std::integral auto const &rhs) const noexcept -> std::strong_ordering
     {
-        try {
+        try
+        {
             return static_cast<decltype(rhs)>(*this) <=> rhs;
-        } catch (std::overflow_error const &) {
+        }
+        catch (std::overflow_error const &)
+        {
             return negative ? std::strong_ordering::less : std::strong_ordering::greater;
         }
     }
@@ -91,11 +95,13 @@ public:
         size_t const num_bits = this->bit_count();
 
         // Unsigned types cannot store negative numbers.
-        if (negative && !is_signed) {
+        if (negative && !is_signed)
+        {
             throw std::underflow_error(std::format("Number can't fit in unsigned type '{}'", detail::type_name<T>()));
         }
         // Signed types can store 1 less bit than their unsigned counterpart.
-        if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed)) {
+        if (num_bits > (sizeof(T) * 8) - static_cast<size_t>(is_signed))
+        {
             throw std::overflow_error(
               std::format("Number is too large to be converted to type '{}'", detail::type_name<T>())
             );
@@ -103,7 +109,8 @@ public:
 
         UnsignedT result{};
 
-        for (size_t i = 0; i < sizeof(T) * 8; i += chunk_bits) {
+        for (size_t i = 0; i < sizeof(T) * 8; i += chunk_bits)
+        {
             result |= static_cast<T>(this->chunks[i / chunk_bits]) << i;
         }
 
@@ -121,10 +128,13 @@ public:
     /// @return Whether the conversion was successful.
     [[nodiscard]] auto convert(std::string &output) const noexcept -> bool
     {
-        try {
+        try
+        {
             output = static_cast<std::string>(*this);
             return true;
-        } catch (std::invalid_argument const &) {
+        }
+        catch (std::invalid_argument const &)
+        {
             return false;
         }
     }
@@ -136,10 +146,13 @@ public:
     /// @return Whether the conversion was successful.
     [[nodiscard]] auto convert(std::integral auto &output) const noexcept -> bool
     {
-        try {
+        try
+        {
             output = static_cast<decltype(output)>(*this);
             return true;
-        } catch (std::overflow_error const &) {
+        }
+        catch (std::overflow_error const &)
+        {
             return false;
         }
     }
@@ -327,16 +340,19 @@ struct std::formatter<BI::BigInt> : std::formatter<std::string>
     {
         auto const *it = ctx.begin();
 
-        if (it == ctx.end() || *it == '}') {
+        if (it == ctx.end() || *it == '}')
+        {
             return it;
         }
 
-        if (*it == '#') {
+        if (*it == '#')
+        {
             add_prefix = true;
             std::advance(it, 1);
         }
 
-        switch (*it) {
+        switch (*it)
+        {
         case 'B':
             capitalize = true;
             [[fallthrough]];
@@ -361,7 +377,8 @@ struct std::formatter<BI::BigInt> : std::formatter<std::string>
 
         std::advance(it, 1);
 
-        if (it != ctx.end() && *it != '}') {
+        if (it != ctx.end() && *it != '}')
+        {
             throw std::format_error("Invalid format specifier");
         }
 

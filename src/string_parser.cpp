@@ -27,7 +27,8 @@ static constexpr auto is_power_of_two(std::integral auto num) -> bool
 
 auto BigInt::is_valid_digit(Base base, char c) -> bool
 {
-    switch (base) {
+    switch (base)
+    {
     case Base::Binary:
         return c == '0' || c == '1';
     case Base::Octal:
@@ -41,11 +42,13 @@ auto BigInt::is_valid_digit(Base base, char c) -> bool
 
 auto BigInt::char_to_digit(Base base, char c) -> ChunkType
 {
-    if (!is_valid_digit(base, c)) {
+    if (!is_valid_digit(base, c))
+    {
         throw std::invalid_argument(std::format("Invalid digit: {}", c));
     }
 
-    switch (base) {
+    switch (base)
+    {
     case Base::Binary:
     case Base::Octal:
     case Base::Decimal:
@@ -65,11 +68,13 @@ auto BigInt::long_divide(std::string_view num, std::string &quotient, Base base,
     auto const base_num = std::to_underlying(base);
     ChunkType dividend = 0;
 
-    for (char digit : num) {
+    for (char digit : num)
+    {
         dividend = dividend * base_num + char_to_digit(base, digit);
 
         // If dividend >= divisor, divide and store the quotient
-        if (dividend >= divisor) {
+        if (dividend >= divisor)
+        {
             ChunkType quot = dividend / divisor;
             ChunkType rem = dividend % divisor;
 
@@ -77,7 +82,9 @@ auto BigInt::long_divide(std::string_view num, std::string &quotient, Base base,
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             quotient += digits[quot];
             dividend = rem;
-        } else if (!quotient.empty()) {
+        }
+        else if (!quotient.empty())
+        {
             // If dividend is less than divisor and quotient is non-empty, add '0'.
             quotient += '0';
         }
@@ -91,7 +98,8 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
     // Numeric value of base. Used for base conversion.
     auto const base_num = std::to_underlying(base);
 
-    if (!is_power_of_two(base_num)) {
+    if (!is_power_of_two(base_num))
+    {
         throw std::invalid_argument("Base must be a power of 2");
     }
 
@@ -105,7 +113,8 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
     ChunkType current_chunk{};
     size_t current_chunk_bits = 0;
 
-    for (size_t i = num.size(); i-- > 0;) {
+    for (size_t i = num.size(); i-- > 0;)
+    {
         // Bits that will fit in the current chunk.
         size_t const added_bits = std::min(bits_per_digit, chunk_bits - current_chunk_bits);
         // Bits that won't fit in the current chunk.
@@ -122,7 +131,8 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
         // Increment the number of bits in the current chunk.
         current_chunk_bits += added_bits;
 
-        if (current_chunk_bits == chunk_bits) {
+        if (current_chunk_bits == chunk_bits)
+        {
             // The current chunk is full, push it to the chunks vector and reset the chunk.
             chunks.push_back(current_chunk);
 
@@ -132,7 +142,8 @@ void BigInt::power_of_two_base_to_binary(std::string_view num, Base base)
         }
     }
 
-    if (current_chunk_bits > 0) {
+    if (current_chunk_bits > 0)
+    {
         // If the last chunk is not full, push it to the chunks vector.
         chunks.push_back(current_chunk);
     }
@@ -158,7 +169,8 @@ void BigInt::decimal_base_to_binary(std::string_view num)
     std::string current_num{num};
     std::string new_num;
 
-    while (!current_num.empty()) {
+    while (!current_num.empty())
+    {
         // If the previous iteration was the first half of the chunk, the current iteration will be the second half,
         // and vice versa.
         is_half_chunk = !is_half_chunk;
@@ -168,10 +180,13 @@ void BigInt::decimal_base_to_binary(std::string_view num)
         ChunkType remainder = long_divide(current_num, new_num, Base::Decimal, divisor);
 
         // Store the remainder in the current chunk.
-        if (is_half_chunk) {
+        if (is_half_chunk)
+        {
             // First half of the chunk, just store the remainder.
             current_chunk = remainder;
-        } else {
+        }
+        else
+        {
             // Full chunk, push it to the chunks vector and reset the chunk.
             // The most significant half of the chunk is the remainder from this iteration.
             chunks.push_back((remainder << half_chunk_bits) | current_chunk);
@@ -183,16 +198,20 @@ void BigInt::decimal_base_to_binary(std::string_view num)
     }
 
     // If the last chunk is not full, push it to the chunks vector.
-    if (is_half_chunk) {
+    if (is_half_chunk)
+    {
         chunks.push_back(current_chunk);
     }
 }
 
 void BigInt::base_to_binary(std::string_view num, Base base)
 {
-    if (is_power_of_two(std::to_underlying(base))) {
+    if (is_power_of_two(std::to_underlying(base)))
+    {
         power_of_two_base_to_binary(num, base);
-    } else {
+    }
+    else
+    {
         assert(base == Base::Decimal);
         decimal_base_to_binary(num);
     }
@@ -209,12 +228,14 @@ auto BigInt::format_to_power_of_two_base(Base base, bool add_prefix, bool capita
 
     // Iterate through chunks of digit_bits bits and convert them to the specified base.
     size_t i = 0;
-    while (i < bit_count) {
+    while (i < bit_count)
+    {
         // Number of bits to extract from the current chunk.
         size_t const extracted_bits = std::min(digit_bits, bit_count - i);
 
         ChunkType digit = 0;
-        for (size_t j = 0; j < extracted_bits; ++j) {
+        for (size_t j = 0; j < extracted_bits; ++j)
+        {
             digit |= static_cast<ChunkType>(get_bit_at(i + j)) << j;
         }
 
@@ -227,14 +248,17 @@ auto BigInt::format_to_power_of_two_base(Base base, bool add_prefix, bool capita
     // Reverse the result string to make it MSB first.
     std::ranges::reverse(result);
 
-    if (result.empty()) {
+    if (result.empty())
+    {
         result = "0";
     }
 
     std::string prefix;
 
-    if (add_prefix) {
-        switch (base) {
+    if (add_prefix)
+    {
+        switch (base)
+        {
         case Base::Binary:
             prefix = capitalize ? "0B" : "0b";
             break;
@@ -263,7 +287,8 @@ auto BigInt::format_to_decimal() const -> std::string
     result.reserve(static_cast<size_t>(std::ceil(static_cast<long double>(quotient.bit_count()) / log2_10) + 1));
 
     // Keep dividing modulo 10 and store the remainder in a string.
-    while (!quotient.is_zero()) {
+    while (!quotient.is_zero())
+    {
         std::tie(quotient, remainder) = div(quotient, ten);
         // Append the remainder to the result string.
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -276,13 +301,16 @@ auto BigInt::format_to_decimal() const -> std::string
 
 auto BigInt::format_to_base(Base base, bool add_prefix, bool capitalize) const -> std::string
 {
-    if (is_zero()) {
+    if (is_zero())
+    {
         return "0";
     }
-    if (negative) {
+    if (negative)
+    {
         return "-" + (-(*this)).format_to_base(base, add_prefix, capitalize);
     }
-    if (is_power_of_two(std::to_underlying(base))) {
+    if (is_power_of_two(std::to_underlying(base)))
+    {
         return format_to_power_of_two_base(base, add_prefix, capitalize);
     }
     assert(base == Base::Decimal);

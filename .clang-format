@@ -20,27 +20,7 @@ AccessModifierOffset: -4
 IndentAccessModifiers: false
 IndentCaseLabels: false
 
-# Wrap braces after class, enum, function, struct and union.
-BreakBeforeBraces: Custom
-BraceWrapping:
-    AfterCaseLabel:        false
-    AfterClass:            true
-    AfterControlStatement: Never
-    AfterEnum:             true
-    AfterFunction:         true
-    AfterNamespace:        true
-    AfterObjCDeclaration:  true
-    AfterStruct:           true
-    AfterUnion:            true
-    AfterExternBlock:      true
-    BeforeCatch:           false
-    BeforeElse:            false
-    BeforeLambdaBody:      false
-    BeforeWhile:           false
-    IndentBraces:          false
-    SplitEmptyFunction:    true
-    SplitEmptyRecord:      true
-    SplitEmptyNamespace:   true
+BreakBeforeBraces: Allman
 
 AlignAfterOpenBracket: BlockIndent
 AlignEscapedNewlines: Right
