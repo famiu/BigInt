@@ -40,7 +40,7 @@ AlwaysBreakBeforeMultilineStrings: No
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: true
 
-AllowAllArgumentsOnNextLine: true
+AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
