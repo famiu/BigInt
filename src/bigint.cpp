@@ -21,10 +21,7 @@ BigInt::BigInt()
 
 BigInt::BigInt(std::string_view num)
 {
-    auto throw_invalid_number = [&num]()
-    {
-        throw std::invalid_argument(std::format("Invalid number: \"{}\"", num));
-    };
+    auto throw_invalid_number = [&num]() { throw std::invalid_argument(std::format("Invalid number: \"{}\"", num)); };
 
     if (num.empty())
     {
@@ -677,25 +674,23 @@ auto BigInt::multiply_chunks(ChunkType const a, ChunkType const b) noexcept -> s
         return {static_cast<ChunkType>(result), static_cast<ChunkType>(result >> 64)};
 #else
         // Fall back to custom 64-bit multiplication.
-
         // Split the chunks into two halves and multiply them.
         constexpr auto half_chunk_mask = static_cast<ChunkType>(std::numeric_limits<uint32_t>::max());
-        uint64_t const a1 = a >> 32;
-        uint64_t const a0 = a & half_chunk_mask;
-        uint64_t const b1 = b >> 32;
-        uint64_t const b0 = b & half_chunk_mask;
+        constexpr auto hi = [](ChunkType const x) -> uint64_t { return (x >> 32); };
+        constexpr auto lo = [](ChunkType const x) -> uint64_t { return (x & half_chunk_mask); };
+        constexpr auto lo_shift = [](ChunkType const x) -> uint64_t { return (x << 32); };
+
+        auto const [a1, a0, b1, b0] = std::tuple{hi(a), lo(a), hi(b), lo(b)};
+        // Multiply every possible pair of 32-bit chunks.
+        auto const [p0, p1, p2, p3] = std::tuple{a0 * b0, a1 * b0, a0 * b1, a1 * b1};
+
         // a1a0 * b1b0 = (a1 * b1) * 2^64 + (a1 * b0 + a0 * b1) * 2^32 + a0 * b0
-        uint64_t const p0 = a0 * b0;
-        uint64_t const p1 = a1 * b0;
-        uint64_t const p2 = a0 * b1;
-        uint64_t const p3 = a1 * b1;
-
         // Higher 32 bits of the result (lower 32 bits are stored in p0).
-        uint64_t const result_high = (p0 >> 32) + (p1 & half_chunk_mask) + (p2 & half_chunk_mask);
+        uint64_t const result_high = hi(p0) + lo(p1) + lo(p2);
         // Overflow from the multiplication.
-        uint64_t const overflow = p3 + (p1 >> 32) + (p2 >> 32) + (result_high >> 32);
+        uint64_t const overflow = p3 + hi(p1) + hi(p2) + hi(result_high);
 
-        return {static_cast<ChunkType>((result_high << 32) | (p0 & half_chunk_mask)), static_cast<ChunkType>(overflow)};
+        return {static_cast<ChunkType>(lo_shift(result_high) | lo(p0)), static_cast<ChunkType>(overflow)};
 #endif
     }
 }
