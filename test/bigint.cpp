@@ -148,6 +148,23 @@ TEST_CASE("BigInt Literals")
 
 BigInt const a = 1234567890_bi;
 BigInt const b = 987654321_bi;
+BigInt const x = 883423532389192164791648750371459257913741948437_bi;
+BigInt const y = 515377520732011331036461129765621272702107522001_bi;
+BigInt const z = 368046011657180833755187620605837985211634426436515377520732011331036461129765621272702107522001_bi;
+
+BigInt const a_neg = -1234567890_bi;
+BigInt const b_neg = -987654321_bi;
+BigInt const x_neg = -883423532389192164791648750371459257913741948437_bi;
+BigInt const y_neg = -515377520732011331036461129765621272702107522001_bi;
+BigInt const z_neg =
+    -368046011657180833755187620605837985211634426436515377520732011331036461129765621272702107522001_bi;
+
+std::string const a_str = "1234567890";
+std::string const b_str = "987654321";
+std::string const x_str = "883423532389192164791648750371459257913741948437";
+std::string const y_str = "515377520732011331036461129765621272702107522001";
+std::string const z_str =
+    "368046011657180833755187620605837985211634426436515377520732011331036461129765621272702107522001";
 
 TEST_CASE("BigInt abs()")
 {
@@ -155,12 +172,16 @@ TEST_CASE("BigInt abs()")
     {
         REQUIRE((a).abs() == a);
         REQUIRE((b).abs() == b);
+        REQUIRE((x).abs() == x);
+        REQUIRE((y).abs() == y);
     }
 
     SECTION("Negative numbers")
     {
         REQUIRE((-a).abs() == a);
         REQUIRE((-b).abs() == b);
+        REQUIRE((-x).abs() == x);
+        REQUIRE((-y).abs() == y);
     }
 
     SECTION("Zero")
@@ -197,14 +218,20 @@ TEST_CASE("BigInt to String conversion")
 {
     SECTION("Positive numbers")
     {
-        REQUIRE(std::string(a) == "1234567890");
-        REQUIRE(std::string(b) == "987654321");
+        REQUIRE(std::string(a) == a_str);
+        REQUIRE(std::string(b) == b_str);
+        REQUIRE(std::string(x) == x_str);
+        REQUIRE(std::string(y) == y_str);
+        REQUIRE(std::string(z) == z_str);
     }
 
     SECTION("Negative numbers")
     {
-        REQUIRE(std::string(-a) == "-1234567890");
-        REQUIRE(std::string(-b) == "-987654321");
+        REQUIRE(std::string(-a) == "-" + a_str);
+        REQUIRE(std::string(-b) == "-" + b_str);
+        REQUIRE(std::string(-x) == "-" + x_str);
+        REQUIRE(std::string(-y) == "-" + y_str);
+        REQUIRE(std::string(-z) == "-" + z_str);
     }
 }
 
@@ -212,14 +239,20 @@ TEST_CASE("BigInt Unary operators")
 {
     SECTION("Unary plus")
     {
-        REQUIRE(+a == 1234567890_bi);
-        REQUIRE(+b == 987654321_bi);
+        REQUIRE(+a == a);
+        REQUIRE(+b == b);
+        REQUIRE(+x == x);
+        REQUIRE(+y == y);
+        REQUIRE(+z == z);
     }
 
     SECTION("Unary minus")
     {
-        REQUIRE(-a == -1234567890_bi);
-        REQUIRE(-b == -987654321_bi);
+        REQUIRE(-a == a_neg);
+        REQUIRE(-b == b_neg);
+        REQUIRE(-x == x_neg);
+        REQUIRE(-y == y_neg);
+        REQUIRE(-z == z_neg);
     }
 }
 
@@ -227,9 +260,9 @@ TEST_CASE("BigInt Comparison")
 {
     SECTION("Three-way comparison")
     {
-        REQUIRE(a <=> b == std::strong_ordering::greater);
-        REQUIRE(a <=> a == std::strong_ordering::equal);
-        REQUIRE(b <=> a == std::strong_ordering::less);
+        REQUIRE(x <=> y == std::strong_ordering::greater);
+        REQUIRE(x <=> x == std::strong_ordering::equal);
+        REQUIRE(y <=> x == std::strong_ordering::less);
     }
 
     SECTION("Equality and inequality")
@@ -247,17 +280,17 @@ TEST_CASE("BigInt Comparison")
 
     SECTION("Greater and less than")
     {
-        REQUIRE(a > b);
-        REQUIRE(a >= b);
-        REQUIRE(b < a);
-        REQUIRE(b <= a);
+        REQUIRE(x > y);
+        REQUIRE(x >= y);
+        REQUIRE(y < x);
+        REQUIRE(y <= x);
     }
 
     SECTION("Negative three-way comparison")
     {
-        REQUIRE(-a <=> -b == std::strong_ordering::less);
-        REQUIRE(-a <=> -a == std::strong_ordering::equal);
-        REQUIRE(-b <=> -a == std::strong_ordering::greater);
+        REQUIRE(-x <=> -y == std::strong_ordering::less);
+        REQUIRE(-x <=> -x == std::strong_ordering::equal);
+        REQUIRE(-y <=> -x == std::strong_ordering::greater);
     }
 
     SECTION("Negative equality and inequality")
@@ -275,15 +308,12 @@ TEST_CASE("BigInt Comparison")
 
     SECTION("Negative greater and less than")
     {
-        REQUIRE(-a < -b);
-        REQUIRE(-a <= -b);
-        REQUIRE(-b > -a);
-        REQUIRE(-b >= -a);
+        REQUIRE(-x < -y);
+        REQUIRE(-x <= -y);
+        REQUIRE(-y > -x);
+        REQUIRE(-y >= -x);
     }
 }
-
-BigInt const x = 883423532389192164791648750371459257913741948437_bi;
-BigInt const y = 515377520732011331036461129765621272702107522001_bi;
 
 TEST_CASE("BigInt Addition")
 {
